@@ -1,12 +1,9 @@
+<p align="center">
+  <b>Engraph</b><br>
+  The hippocampus for your coding agent
+</p>
+
 <div align="center">
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.png">
-  <img src=".github/assets/logo.png" alt="Engraph Logo" width="250"/>
-</picture>
-
-**The context layer for agentic coding**
 
 [![npm version](https://img.shields.io/npm/v/engraph)](https://www.npmjs.com/package/engraph)
 [![npm downloads](https://img.shields.io/npm/dm/engraph)](https://www.npmjs.com/package/engraph)
@@ -17,9 +14,9 @@
 
 ---
 
-Engraph creates a persistent **context repository** for your codebase that AI coding agents can tap into automatically. Instead of re-explaining architectural decisions, conventions, and design rationale every session, Engraph preserves them in structured, version-controlled files that your agent references transparently.
+Engraph creates a persistent **context graph** for your codebase that AI coding agents can tap into automatically. Instead of re-explaining architectural decisions, conventions, and design rationale every session, Engraph preserves them in structured, version-controlled files that your agent references transparently.
 
-It works through **skills**, **hooks**, and **sub-agents** that integrate directly into your AI coding agent. When your agent explores the codebase, Engraph hooks intercept the call and route it through the context repository first — giving the agent curated architectural knowledge, not just raw source files.
+It works through **skills**, **hooks**, and **sub-agents** that integrate directly into your AI coding agent. When your agent explores the codebase, Engraph hooks intercept the call and route it through the context graph first — giving the agent curated architectural knowledge, not just raw source files.
 
 ## Why Engraph?
 
@@ -39,7 +36,7 @@ Context lives in version-controlled YAML files in `.engraph/context/` alongside 
 | Context lost after each session               | Context persists in `.engraph/context/`                         |
 | Agent explores only raw source files          | Agent searches curated context first, then source files            |
 | Architectural decisions forgotten              | Decisions preserved, searchable, and referenced automatically      |
-| Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                  |
+| Knowledge lives in individual developer heads | Shared context graph for team-wide knowledge                  |
 | Each feature starts from scratch              | Each feature builds on accumulated project context                 |
 | Conventions enforced manually (if at all)     | Conventions documented and surfaced to agent during development    |
 | Agent guesses how to test and validate changes | Agent follows encoded verification steps and testing strategies    |
@@ -72,10 +69,6 @@ Or with npx:
 npx engraph init .
 ```
 
-<div align="center">
-<img src=".github/assets/screenshot-init.png" alt="Engraph initialization screenshot" width="700"/>
-</div>
-
 ### Upgrading to the Latest Version
 
 To upgrade an existing Engraph project to the latest version:
@@ -89,7 +82,7 @@ The upgrade command will:
 - **Interactively prompt** you to select or modify your AI agents (matching the init experience)
 - Update skills, sub-agents, and hooks to the latest versions
 - Merge agent-specific settings (hooks, plugins) for each selected agent
-- Preserve your existing context repository and configuration
+- Preserve your existing context graph and configuration
 
 **Options:**
 
@@ -105,11 +98,15 @@ engraph upgrade --debug
 
 After `engraph init`, open your AI coding agent in the project and start working as usual. Engraph works transparently in the background:
 
-1. **Context search happens automatically** — when your agent explores the codebase, Engraph hooks route the exploration through your context repository first, enriching the agent's understanding with curated architectural knowledge.
+1. **Context search happens automatically** — when your agent explores the codebase, Engraph hooks route the exploration through your context graph first, enriching the agent's understanding with curated architectural knowledge.
 
-2. **Extract context after completing work** — run the `/context-extract` skill to capture new knowledge (architecture decisions, conventions, design rationale) into the context repository for future sessions.
+2. **Extract context after completing work** — run the `/context-extract` skill to capture new knowledge (architecture decisions, conventions, design rationale) into the context graph for future sessions.
 
-That's it. No special workflow to follow. Your agent gets smarter context automatically, and you capture knowledge when you want to preserve it.
+3. **Capture knowledge during a session** — use the `/context-add` skill to add specific insights, decisions, or conventions to the context graph as you discover them.
+
+4. **Verify changes before committing** — run `/context-verify` to check your current branch changes against the context graph's conventions and verification steps.
+
+That's it. No special workflow to follow. Your agent gets smarter context automatically, and you capture and verify knowledge when you want to.
 
 > For a fresh project with no context yet, bootstrap the repository, by running the `context-extract` skill with no additional arguments. Use it with arguments if you want to extract deeper context on a specific topic.
 
@@ -133,13 +130,13 @@ Engraph integrates into your AI coding agent through three mechanisms:
            |              skill)
            │
    ┌───────▼────────┐
-   │   Sub-Agents   │     Search context repository
+   │   Sub-Agents   │     Search context graph
    │                │     (structural, conventions,
    │                │     verification explorers)
    └───────┬────────┘
            │
   ┌────────▼───────────┐
-  │ Context Repository │  .engraph/context/
+  │   Context Graph    │  .engraph/context/
   │                    │  structural/, conventions/,
   │                    │  verification/
   └────────────────────┘
@@ -147,7 +144,7 @@ Engraph integrates into your AI coding agent through three mechanisms:
 
 ### Hooks
 
-Hooks intercept your agent's explore/search calls and redirect them through the Engraph context repository. Each supported agent has its own hook mechanism:
+Hooks intercept your agent's explore/search calls and redirect them through the Engraph context graph. Each supported agent has its own hook mechanism:
 
 - **Claude Code**: PreToolUse hook in `.claude/settings.local.json` that intercepts Task tool calls with `subagent_type: "Explore"` and redirects to `engraph-explorer`
 - **Cursor**: preToolUse hook in `.cursor/hooks.json` with a shell script (`.cursor/hooks/setup-explorer-subagent.sh`) that performs the same redirection
@@ -159,23 +156,27 @@ This happens transparently — your agent doesn't need to know about Engraph. It
 
 Engraph installs specialized sub-agents into your agent's configuration:
 
-- **Explorers**: Triggered by the `context-search` skill to scan the context repository for structural, conventions, and verification knowledge.
-- **Extractors**: Used by the `context-extract` skill to extract specific context files from the codebase
+- **Explorers**: Triggered by the `context-search` skill to scan the context graph for structural, conventions, and verification knowledge.
+- **Extractors**: Used by the `context-extract` and `context-add` skills to create and update context files from the codebase
 
 ### Skills
 
-Two skills are installed as slash commands that can be invoked manually or triggered automatically:
+Four skills are installed as slash commands that can be invoked manually or triggered automatically:
 
-- **`context-search`** — Search the context repository for curated codebase knowledge. Dispatches explorers in parallel and synthesizes findings. Normally invoked automatically via hooks when your agent explores, but can also be used manually for direct queries.
+- **`context-search`** — Search the context graph for curated codebase knowledge. Dispatches explorers in parallel and synthesizes findings. Normally invoked automatically via hooks when your agent explores, but can also be used manually for direct queries.
 
 - **`context-extract`** — Extract and update context files from the codebase. Supports three modes:
-  - **Cold start**: Bootstrap the entire context repository for a new project
+  - **Cold start**: Bootstrap the entire context graph for a new project
   - **Incremental**: Update context after recent implementation changes
   - **Deep dive**: Focused extraction on specific modules or topics
 
-## The Context Repository
+- **`context-add`** — Add new knowledge to the context graph. Classifies input into the right domain (structural, conventions, or verification), grounds it with real codebase examples, and creates a structured context file.
 
-The context repository lives in `.engraph/context/` and is organized into three domains:
+- **`context-verify`** — Verify current branch changes against the context graph. Checks conventions for static compliance and presents verification steps as a checklist.
+
+## The Context Graph
+
+The context graph lives in `.engraph/context/` and is organized into three domains:
 
 ```
 .engraph/context/
@@ -203,9 +204,9 @@ Engraph currently supports three AI coding agents with full integration (skills,
 
 | Agent | Hooks | Skills | Sub-Agents |
 |-------|-------|--------|------------|
-| **Claude Code** | PreToolUse in `settings.local.json` | context-search, context-extract | All 7 engraph agents |
-| **Cursor** | preToolUse in `hooks.json` + shell script | context-search, context-extract | All 7 engraph agents |
-| **OpenCode** | Plugin in `.opencode/plugins/` | context-search, context-extract | All 7 engraph agents |
+| **Claude Code** | PreToolUse in `settings.local.json` | context-search, context-extract, context-add, context-verify | All 7 engraph agents |
+| **Cursor** | preToolUse in `hooks.json` + shell script | context-search, context-extract, context-add, context-verify | All 7 engraph agents |
+| **OpenCode** | Plugin in `.opencode/plugins/` | context-search, context-extract, context-add, context-verify | All 7 engraph agents |
 
 ### Want support for another agent?
 
@@ -223,7 +224,7 @@ Check the existing implementations for Claude, Cursor, and OpenCode as reference
 
 ## Contributing
 
-Engraph is **open source** and welcomes contributions! We're building the context layer for agentic coding together.
+Engraph is **open source** and welcomes contributions! We're building the expertise layer for agentic coding together.
 
 ### Quick Start for Contributors
 
@@ -271,7 +272,7 @@ Adding support for a new AI agent is a great way to contribute — see [Supporte
 
 ## Support & Community
 
-- **Website**: [https://engraph.dev/engraph](https://engraph.dev/engraph) - Learn more about Engraph
+- **Website**: [https://buildforce.dev/engraph](https://buildforce.dev/engraph) - Learn more about Engraph
 - **GitHub Repository**: [https://github.com/berserkdisruptors/engraph](https://github.com/berserkdisruptors/engraph)
 - **npm Package**: [https://www.npmjs.com/package/engraph](https://www.npmjs.com/package/engraph)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/engraph/issues)
@@ -289,10 +290,4 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 If Engraph helps your AI coding agent make better decisions, please star the project on GitHub. It helps us reach more developers and build a stronger community.
 
-[**Star Engraph on GitHub**](https://github.com/berserkdisruptors/engraph)
 
----
-
-**Made with 💪 by [Berserk Disruptors](https://github.com/berserkdisruptors)**
-
-_The context layer for agentic coding, one context file at a time._
