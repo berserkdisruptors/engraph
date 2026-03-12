@@ -1,0 +1,84 @@
+{
+  "name": "engraph",
+  "version": "0.0.1",
+  "description": "Engraph - The context layer for agentic coding",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "engraph": "./dist/cli.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:coverage": "vitest run --coverage",
+    "commit": "cz",
+    "prepublishOnly": "npm run build",
+    "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100"
+  },
+  "keywords": [
+    "cli",
+    "ai",
+    "engraph",
+    "agentic-coding",
+    "ai-assisted-development"
+  ],
+  "author": "Berserk Disruptors",
+  "license": "Apache License 2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/berserkdisruptors/engraph"
+  },
+  "homepage": "https://github.com/berserkdisruptors/engraph#readme",
+  "bugs": {
+    "url": "https://github.com/berserkdisruptors/engraph/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.9.0",
+    "adm-zip": "^0.5.16",
+    "axios": "^1.6.7",
+    "boxen": "^7.1.1",
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.3",
+    "commander": "^12.0.0",
+    "figlet": "^1.9.3",
+    "fs-extra": "^11.2.0",
+    "glob": "^11.0.3",
+    "gradient-string": "^2.0.2",
+    "log-symbols": "^6.0.0",
+    "ora": "^8.0.1",
+    "which": "^4.0.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@types/adm-zip": "^0.5.7",
+    "@types/figlet": "^1.7.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.11.19",
+    "@types/which": "^3.0.3",
+    "@vitest/coverage-v8": "^4.0.18",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

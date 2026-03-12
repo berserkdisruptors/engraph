@@ -1,0 +1,160 @@
+import fs from "fs-extra";
+import path from "path";
+import chalk from "chalk";
+import { confirm } from "@inquirer/prompts";
+import { MINT_COLOR, INQUIRER_THEME } from "../../constants.js";
+import { createBox } from "../../utils/box.js";
+
+/**
+ * Validate and normalize project name and location
+ */
+export async function validateProjectSetup(
+  inputProjectName?: string,
+  here: boolean = false,
+  force: boolean = false
+): Promise<{
+  projectName: string;
+  projectPath: string;
+  isHere: boolean;
+}> {
+  let projectName = inputProjectName;
+  let isHere = here;
+
+  // Handle '.' as shorthand for current directory (equivalent to --here)
+  if (projectName === ".") {
+    isHere = true;
+    projectName = undefined;
+  }
+
+  // Validate arguments
+  if (isHere && projectName) {
+    console.error(
+      chalk.red("Error:"),
+      "Cannot specify both project name and --here flag"
+    );
+    process.exit(1);
+  }
+
+  if (!isHere && !projectName) {
+    console.error(
+      chalk.red("Error:"),
+      "Must specify either a project name, use '.' for current directory, or use --here flag"
+    );
+    process.exit(1);
+  }
+
+  // Determine project directory
+  let projectPath: string;
+  if (isHere) {
+    projectName = path.basename(process.cwd());
+    projectPath = process.cwd();
+
+    // Check if Engraph is already initialized
+    const engraphDir = path.join(projectPath, ".engraph");
+    const isEngraphInitialized = await fs.pathExists(engraphDir);
+
+    if (isEngraphInitialized) {
+      console.log(
+        MINT_COLOR("Warning:"),
+        "Engraph is already initialized in this directory"
+      );
+      console.log(
+        MINT_COLOR(
+          "Proceeding will overwrite existing Engraph configuration and templates"
+        )
+      );
+
+      if (force) {
+        console.log(
+          MINT_COLOR(
+            "--force supplied: skipping confirmation and proceeding with re-initialization"
+          )
+        );
+      } else {
+        // Ask for confirmation
+        const confirmed = await confirm({
+          message: "Do you want to continue?",
+          default: false,
+          theme: INQUIRER_THEME,
+        });
+
+        if (!confirmed) {
+          console.log(MINT_COLOR("Operation cancelled"));
+          process.exit(0);
+        }
+      }
+    }
+  } else {
+    projectPath = path.resolve(projectName!);
+
+    // Check if project directory already exists
+    if (await fs.pathExists(projectPath)) {
+      console.log();
+      const errorContent =
+        `Directory '${MINT_COLOR(projectName)}' already exists\n` +
+        "Please choose a different project name or remove the existing directory.";
+      console.log(
+        createBox(errorContent, {
+          title: "Directory Conflict",
+          borderColor: "red",
+        })
+      );
+      console.log();
+      process.exit(1);
+    }
+  }
+
+  return { projectName: projectName!, projectPath, isHere };
+}
+
+/**
+ * Validate AI agent selection
+ */
+export function validateAiAssistant(
+  selectedAi: string,
+  aiChoices: Record<string, string>
+): void {
+  if (!aiChoices[selectedAi]) {
+    console.error(
+      chalk.red("Error:"),
+      `Invalid AI agent '${selectedAi}'. Choose from: ${Object.keys(
+        aiChoices
+      ).join(", ")}`
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Check agent tool availability
+ */
+export function checkAgentTool(
+  selectedAi: string,
+  aiChoices: Record<string, string>,
+  checkTool: (tool: string) => boolean
+): void {
+  const agentChecks: Record<string, string> = {
+    claude: "https://docs.anthropic.com/en/docs/claude-code/setup",
+    opencode: "https://opencode.ai",
+  };
+
+  if (agentChecks[selectedAi]) {
+    if (!checkTool(selectedAi)) {
+      const installUrl = agentChecks[selectedAi];
+      console.log();
+      const errorContent =
+        `${MINT_COLOR(selectedAi)} not found\n` +
+        `Install with: ${MINT_COLOR(installUrl)}\n` +
+        `${aiChoices[selectedAi]} is required to continue with this project type.\n\n` +
+        `Tip: Use ${MINT_COLOR("--ignore-agent-tools")} to skip this check`;
+      console.log(
+        createBox(errorContent, {
+          title: "Agent Detection Error",
+          borderColor: "red",
+        })
+      );
+      console.log();
+      process.exit(1);
+    }
+  }
+}

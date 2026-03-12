@@ -1,0 +1,34 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+*.log
+.env
+.env.local
+*.lock
+
+# TypeScript / Node.js
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Engraph
+.engraph/engraph.json
+
+# Agents
+.claude/**
+.cursor/**
+.opencode/**
+
+# Release packages
+.genreleases/
+
+# Git worktrees
+.worktrees/
+
+# Test coverage
+coverage/
