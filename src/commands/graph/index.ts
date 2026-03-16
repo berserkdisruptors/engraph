@@ -2,7 +2,8 @@ import path from "path";
 import fs from "fs-extra";
 import { stringify } from "yaml";
 import type { Codegraph } from "./types.js";
-import { scanModules } from "./scanner.js";
+import { scanModules, listTrackedSourceFiles } from "./scanner.js";
+import { detectProjectProfile } from "./profiler.js";
 
 const GENERATOR_VERSION = "1.0.0";
 const CODEGRAPH_FILENAME = "_codegraph.yaml";
@@ -35,7 +36,10 @@ export async function generateCodegraph(
   // WP2 — Layer 1: Directory scanner + module tree
   const modules = await scanModules(projectPath, { debug });
 
-  // TODO: WP3 — Layer 2: Project profile + entry point detection
+  // WP3 — Layer 2: Project profile + entry point detection
+  const allFiles = await listTrackedSourceFiles(projectPath);
+  const project = await detectProjectProfile(projectPath, allFiles, modules, { debug });
+
   // TODO: WP4 — Layer 3: Import analysis via tree-sitter WASM
   // TODO: WP5 — Layer 4: Conventional structure + file index
 
@@ -44,22 +48,7 @@ export async function generateCodegraph(
     generator_version: GENERATOR_VERSION,
     commit_sha: commitSha,
 
-    project: {
-      type: "unknown",
-      languages: [],
-      frameworks: [],
-      package_manager: null,
-      entry_points: [],
-      test_framework: null,
-      scale: {
-        total_files: 0,
-        source_files: 0,
-        test_files: 0,
-        total_loc: 0,
-        source_loc: 0,
-        test_loc: 0,
-      },
-    },
+    project,
     modules,
     dependencies: {
       edges: [],

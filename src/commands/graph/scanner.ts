@@ -99,14 +99,26 @@ export async function scanModules(
     console.log(`[scanner] tracked source files: ${allFiles.length}`);
   }
 
+  // Filter out project-root config files that aren't under any source root
+  const sourceFiles = sourceRoots.length > 0
+    ? allFiles.filter((f) => sourceRoots.some((r) => f.startsWith(r + "/")))
+    : allFiles;
+
+  // Also include files under well-known non-source directories (tests, scripts)
+  const nonSourceFiles = sourceRoots.length > 0
+    ? allFiles.filter((f) => !sourceRoots.some((r) => f.startsWith(r + "/")) && f.includes("/"))
+    : [];
+
+  const relevantFiles = [...sourceFiles, ...nonSourceFiles];
+
   // Group files by directory to detect modules
-  const dirFiles = groupFilesByDirectory(allFiles, projectPath, sourceRoots);
+  const dirFiles = groupFilesByDirectory(relevantFiles, projectPath, sourceRoots);
 
   // Build modules from directory groups
   const modules: Module[] = [];
 
   for (const [moduleId, files] of dirFiles.entries()) {
-    const relativeDirPath = moduleIdToRelativePath(moduleId, sourceRoots, projectPath);
+    const relativeDirPath = moduleIdToRelativePath(moduleId, sourceRoots, projectPath, files);
     const moduleType = classifyModuleType(moduleId, files, sourceRoots);
 
     // Separate test files from source files
@@ -172,7 +184,7 @@ async function detectSourceRoots(projectPath: string): Promise<string[]> {
  * This respects .gitignore automatically. Falls back to a manual
  * filesystem walk if git is not available.
  */
-async function listTrackedSourceFiles(
+export async function listTrackedSourceFiles(
   projectPath: string
 ): Promise<string[]> {
   let rawFiles: string[];
@@ -304,26 +316,30 @@ export function deriveModuleId(
 
 /**
  * Convert a module ID back to a relative directory path.
+ *
+ * Uses the file-to-source-root mapping to determine the correct prefix.
+ * Modules not under any source root (e.g., tests/) use their ID as the path.
  */
 function moduleIdToRelativePath(
   moduleId: string,
   sourceRoots: string[],
-  projectPath: string
+  _projectPath: string,
+  files: string[]
 ): string {
   if (moduleId === "root") {
     return sourceRoots.length > 0 ? sourceRoots[0] + "/" : ".";
   }
 
-  // Check which source root contains this module
+  // Determine which source root this module's files actually live under
   for (const root of sourceRoots) {
-    const candidate = path.join(projectPath, root, moduleId);
-    // We don't do async checks here for speed — the module was derived
-    // from a real file path, so the source root it came from is correct.
-    // We just pick the first source root as the convention.
-    return root + "/" + moduleId;
+    const prefix = root + "/" + moduleId + "/";
+    const rootExact = root + "/" + moduleId;
+    if (files.some((f) => f.startsWith(prefix) || path.dirname(f) === rootExact)) {
+      return root + "/" + moduleId;
+    }
   }
 
-  // Not under any source root
+  // Not under any source root — use the module ID as-is
   return moduleId;
 }
 

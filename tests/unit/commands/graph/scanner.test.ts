@@ -216,6 +216,35 @@ describe("scanModules", () => {
     expect(initMod).toBeDefined();
     expect(initMod!.path).toBe("src/commands/init");
   });
+
+  it("excludes project-root config files when src/ exists", async () => {
+    await touch(projectPath, "src/cli.ts");
+    await touch(projectPath, "vitest.config.ts");
+    await touch(projectPath, "commitlint.config.js");
+    await gitCommit(projectPath);
+
+    const modules = await scanModules(projectPath);
+
+    // Root module should only contain src/ files, not project-root configs
+    const rootMod = modules.find((m) => m.id === "root");
+    expect(rootMod).toBeDefined();
+    expect(rootMod!.files.some((f) => f.path.includes("cli.ts"))).toBe(true);
+    expect(rootMod!.files.some((f) => f.path.includes("vitest.config.ts"))).toBe(false);
+    expect(rootMod!.files.some((f) => f.path.includes("commitlint.config.js"))).toBe(false);
+  });
+
+  it("sets correct path for test modules outside source root", async () => {
+    await touch(projectPath, "src/app.ts");
+    await touch(projectPath, "tests/unit/app.test.ts");
+    await gitCommit(projectPath);
+
+    const modules = await scanModules(projectPath);
+
+    const testMod = modules.find((m) => m.id === "tests/unit");
+    expect(testMod).toBeDefined();
+    // Path should be tests/unit, NOT src/tests/unit
+    expect(testMod!.path).toBe("tests/unit");
+  });
 });
 
 describe("deriveModuleId", () => {
