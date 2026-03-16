@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs-extra";
 import { stringify } from "yaml";
 import type { Codegraph } from "./types.js";
+import { scanModules } from "./scanner.js";
 
 const GENERATOR_VERSION = "1.0.0";
 const CODEGRAPH_FILENAME = "_codegraph.yaml";
@@ -31,7 +32,9 @@ export async function generateCodegraph(
     console.log(`[codegraph] commit: ${commitSha ?? "none"}`);
   }
 
-  // TODO: WP2 — Layer 1: Directory scanner + module tree
+  // WP2 — Layer 1: Directory scanner + module tree
+  const modules = await scanModules(projectPath, { debug });
+
   // TODO: WP3 — Layer 2: Project profile + entry point detection
   // TODO: WP4 — Layer 3: Import analysis via tree-sitter WASM
   // TODO: WP5 — Layer 4: Conventional structure + file index
@@ -57,7 +60,7 @@ export async function generateCodegraph(
         test_loc: 0,
       },
     },
-    modules: [],
+    modules,
     dependencies: {
       edges: [],
       core_modules: [],
