@@ -11,6 +11,7 @@ import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
 import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { ensureEngraphInstructionFiles } from "../../utils/agent-instructions.js";
+import { generateCodegraph } from "../graph/index.js";
 
 /**
  * Execute the upgrade process
@@ -55,6 +56,7 @@ export async function executeUpgrade(
     ["replace-skills", "Replace skills"],
     ["merge-settings", "Merge agent settings"],
     ["migrate-context", "Migrate context structure"],
+    ["codegraph", "Regenerate codegraph"],
     ["update-config", "Update engraph.json"],
     ["cleanup", "Cleanup"],
     ["final", "Finalize"],
@@ -441,6 +443,21 @@ export async function executeUpgrade(
         tracker.skip("migrate-context", `error: ${migrationError.message}`);
         if (debug) {
           console.log(chalk.yellow(`\n[DEBUG] Migration error: ${migrationError.message}`));
+        }
+      }
+
+      // Regenerate codegraph — deterministic structural scan of the codebase
+      tracker.start("codegraph");
+      try {
+        const codegraph = await generateCodegraph(projectPath, { debug });
+        tracker.complete(
+          "codegraph",
+          `${codegraph.modules.length} modules, ${Object.keys(codegraph.file_index).length} files`
+        );
+      } catch (codegraphError: any) {
+        tracker.skip("codegraph", `error: ${codegraphError.message}`);
+        if (debug) {
+          console.log(chalk.gray(`\n[DEBUG] Codegraph error: ${codegraphError.message}`));
         }
       }
 

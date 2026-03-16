@@ -13,6 +13,7 @@ import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { AGENT_FOLDER_MAP } from "../../constants.js";
 import { ensureEngraphInstructionFiles } from "../../utils/agent-instructions.js";
+import { generateCodegraph } from "../graph/index.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -49,6 +50,7 @@ export async function setupProject(
         ["chmod", "Ensure scripts executable"],
         ["config", "Create configuration file"],
         ["merge-settings", "Merge agent settings"],
+        ["codegraph", "Generate codegraph"],
         ["git", "Initialize git repository"],
         ["final", "Finalize"],
       ]
@@ -61,6 +63,7 @@ export async function setupProject(
         ["chmod", "Ensure scripts executable"],
         ["config", "Create configuration file"],
         ["merge-settings", "Merge agent settings"],
+        ["codegraph", "Generate codegraph"],
         ["cleanup", "Cleanup"],
         ["git", "Initialize git repository"],
         ["final", "Finalize"],
@@ -278,6 +281,21 @@ export async function setupProject(
       tracker.complete("merge-settings", detail);
     } else {
       tracker.skip("merge-settings", "no agents required settings merge");
+    }
+
+    // Generate codegraph — deterministic structural scan of the codebase
+    tracker.start("codegraph");
+    try {
+      const codegraph = await generateCodegraph(projectPath, { debug });
+      tracker.complete(
+        "codegraph",
+        `${codegraph.modules.length} modules, ${Object.keys(codegraph.file_index).length} files`
+      );
+    } catch (codegraphError: any) {
+      tracker.skip("codegraph", `error: ${codegraphError.message}`);
+      if (debug) {
+        console.log(chalk.gray(`\n[DEBUG] Codegraph error: ${codegraphError.message}`));
+      }
     }
 
     // Ensure root instruction files include Engraph context guidance.
