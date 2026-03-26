@@ -24,6 +24,13 @@ const EXTRACTOR_MAP: Record<string, ExtractorFactory> = {
   ".go": () => import("./go.js").then((m) => m.goExtractor),
   // Rust
   ".rs": () => import("./rust.js").then((m) => m.rustExtractor),
+  // Java
+  ".java": () => import("./java.js").then((m) => m.javaExtractor),
+  // Kotlin
+  ".kt": () => import("./kotlin.js").then((m) => m.kotlinExtractor),
+  ".kts": () => import("./kotlin.js").then((m) => m.kotlinExtractor),
+  // C#
+  ".cs": () => import("./csharp.js").then((m) => m.csharpExtractor),
 };
 
 /** Cache: extension → extractor instance (already loaded) */
