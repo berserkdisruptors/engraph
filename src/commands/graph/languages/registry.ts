@@ -31,6 +31,20 @@ const EXTRACTOR_MAP: Record<string, ExtractorFactory> = {
   ".kts": () => import("./kotlin.js").then((m) => m.kotlinExtractor),
   // C#
   ".cs": () => import("./csharp.js").then((m) => m.csharpExtractor),
+  // C
+  ".c": () => import("./c.js").then((m) => m.cExtractor),
+  ".h": () => import("./c.js").then((m) => m.cExtractor),
+  // C++
+  ".cpp": () => import("./cpp.js").then((m) => m.cppExtractor),
+  ".hpp": () => import("./cpp.js").then((m) => m.cppExtractor),
+  ".cc": () => import("./cpp.js").then((m) => m.cppExtractor),
+  ".hh": () => import("./cpp.js").then((m) => m.cppExtractor),
+  // Ruby
+  ".rb": () => import("./ruby.js").then((m) => m.rubyExtractor),
+  // PHP
+  ".php": () => import("./php.js").then((m) => m.phpExtractor),
+  // Swift
+  ".swift": () => import("./swift.js").then((m) => m.swiftExtractor),
 };
 
 /** Cache: extension → extractor instance (already loaded) */
