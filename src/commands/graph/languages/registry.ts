@@ -9,11 +9,6 @@ import type { LanguageExtractor } from "./types.js";
 
 type ExtractorFactory = () => Promise<LanguageExtractor>;
 
-/**
- * Map of file extensions to extractor factory functions.
- * Currently supports TypeScript and JavaScript. Additional languages
- * will be added in subsequent work packages (WP4b-d).
- */
 const EXTRACTOR_MAP: Record<string, ExtractorFactory> = {
   // TypeScript
   ".ts": () => import("./typescript.js").then((m) => m.typescriptExtractor),
@@ -23,6 +18,12 @@ const EXTRACTOR_MAP: Record<string, ExtractorFactory> = {
   ".jsx": () => import("./javascript.js").then((m) => m.javascriptExtractor),
   ".mjs": () => import("./javascript.js").then((m) => m.javascriptExtractor),
   ".cjs": () => import("./javascript.js").then((m) => m.javascriptExtractor),
+  // Python
+  ".py": () => import("./python.js").then((m) => m.pythonExtractor),
+  // Go
+  ".go": () => import("./go.js").then((m) => m.goExtractor),
+  // Rust
+  ".rs": () => import("./rust.js").then((m) => m.rustExtractor),
 };
 
 /** Cache: extension → extractor instance (already loaded) */
