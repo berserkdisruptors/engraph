@@ -161,7 +161,7 @@ export async function scanModules(
  * Returns relative paths from the project root. If no conventional
  * source root is found, returns an empty array (project root is used).
  */
-async function detectSourceRoots(projectPath: string): Promise<string[]> {
+export async function detectSourceRoots(projectPath: string): Promise<string[]> {
   const candidates = ["src", "lib", "app", "source"];
   const roots: string[] = [];
 
