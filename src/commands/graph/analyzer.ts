@@ -17,11 +17,6 @@ import fs from "fs-extra";
 import Parser from "web-tree-sitter";
 import type {
   Module,
-  DependencyGraph,
-  DependencyEdge,
-  EdgeType,
-  CoreModuleEntry,
-  LeafModuleEntry,
   ExportedSymbol,
   ImportedSymbol,
   SymbolKind,
@@ -29,7 +24,6 @@ import type {
   ExternalImport,
   ImportedByEntry,
 } from "./types.js";
-import { deriveModuleId } from "./scanner.js";
 import { getExtractor } from "./languages/registry.js";
 import type { LanguageExtractor, RawImport } from "./languages/types.js";
 
@@ -71,14 +65,13 @@ export interface AnalyzeImportsOptions {
  * Analyze imports/exports across all modules using tree-sitter WASM.
  *
  * Mutates `modules` in-place (populates file exports, module imports, imported_by).
- * Returns the computed DependencyGraph.
  */
 export async function analyzeImports(
   projectPath: string,
   modules: Module[],
   sourceRoots: string[],
   options: AnalyzeImportsOptions = {}
-): Promise<DependencyGraph> {
+): Promise<void> {
   const { debug = false } = options;
 
   // Build a set of all file paths for import resolution
@@ -247,19 +240,6 @@ export async function analyzeImports(
     console.log(`[analyzer] pass 3: reverse index built`);
   }
 
-  // ── Pass 4: Build dependency graph ───────────────────────────────────
-
-  const dependencyGraph = buildDependencyGraph(modules);
-
-  if (debug) {
-    console.log(
-      `[analyzer] pass 4: ${dependencyGraph.edges.length} edges, ` +
-      `${dependencyGraph.core_modules.length} core, ` +
-      `${dependencyGraph.leaf_modules.length} leaf modules`
-    );
-  }
-
-  return dependencyGraph;
 }
 
 // ─── Internal Helpers ──────────────────────────────────────────────────────
@@ -399,81 +379,6 @@ function processRawImport(
       symbols,
     });
   }
-}
-
-// ─── Dependency Graph Construction ─────────────────────────────────────────
-
-function buildDependencyGraph(modules: Module[]): DependencyGraph {
-  const edges: DependencyEdge[] = [];
-
-  for (const mod of modules) {
-    for (const imp of mod.imports.internal) {
-      const edgeType = classifyEdgeType(imp);
-      const symbols = imp.symbols.map((s) => s.name);
-
-      edges.push({
-        from: mod.id,
-        to: imp.module_id,
-        weight: imp.import_count,
-        direction: "downstream",
-        type: edgeType,
-        symbols,
-      });
-    }
-  }
-
-  // Sort edges deterministically
-  edges.sort((a, b) => {
-    const fromCmp = a.from.localeCompare(b.from);
-    if (fromCmp !== 0) return fromCmp;
-    return a.to.localeCompare(b.to);
-  });
-
-  // Compute core modules (most dependents)
-  const dependentCounts = new Map<string, number>();
-  for (const mod of modules) {
-    dependentCounts.set(mod.id, mod.imported_by.length);
-  }
-
-  const core_modules: CoreModuleEntry[] = Array.from(dependentCounts.entries())
-    .filter(([_, count]) => count > 0)
-    .map(([id, dependents]) => ({ id, dependents }))
-    .sort((a, b) => {
-      const cmp = b.dependents - a.dependents;
-      if (cmp !== 0) return cmp;
-      return a.id.localeCompare(b.id);
-    });
-
-  // Compute leaf modules (no dependents, has at least one import)
-  const leaf_modules: LeafModuleEntry[] = modules
-    .filter(
-      (m) =>
-        m.imported_by.length === 0 &&
-        (m.imports.internal.length > 0 || m.imports.external.length > 0)
-    )
-    .map((m) => ({ id: m.id }))
-    .sort((a, b) => a.id.localeCompare(b.id));
-
-  return { edges, core_modules, leaf_modules };
-}
-
-function classifyEdgeType(imp: InternalImport): EdgeType {
-  if (imp.symbols.length === 0) return "calls";
-
-  const kinds = imp.symbols.map((s) => s.kind);
-  const hasFunction = kinds.includes("function");
-  const hasClass = kinds.includes("class");
-  const hasInterface = kinds.includes("interface");
-  const allConstants = kinds.every((k) => k === "constant" || k === "enum");
-  const allTypes = kinds.every((k) => k === "type" || k === "interface");
-
-  if (hasClass) return "extends";
-  if (hasFunction) return "calls";
-  if (hasInterface) return "implements";
-  if (allConstants) return "configures";
-  if (allTypes) return "type-only";
-
-  return "calls";
 }
 
 // ─── Sorting helpers (deterministic output) ────────────────────────────────

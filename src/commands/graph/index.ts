@@ -6,6 +6,7 @@ import { scanModules, listTrackedSourceFiles, detectSourceRoots } from "./scanne
 import { analyzeImports } from "./analyzer.js";
 import { detectProjectProfile } from "./profiler.js";
 
+
 const GENERATOR_VERSION = "1.0.0";
 const CODEGRAPH_FILENAME = "_codegraph.yaml";
 
@@ -43,9 +44,7 @@ export async function generateCodegraph(
 
   // WP4 — Layer 3: Import analysis via tree-sitter WASM
   const sourceRoots = await detectSourceRoots(projectPath);
-  const dependencies = await analyzeImports(projectPath, modules, sourceRoots, { debug });
-
-  // TODO: WP5 — Layer 4: Conventional structure + file index
+  await analyzeImports(projectPath, modules, sourceRoots, { debug });
 
   const codegraph: Codegraph = {
     generated_at: new Date().toISOString(),
@@ -54,8 +53,6 @@ export async function generateCodegraph(
 
     project,
     modules,
-    dependencies,
-    file_index: {},
   };
 
   // Write the codegraph to .engraph/_codegraph.yaml

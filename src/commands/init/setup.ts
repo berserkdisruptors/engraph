@@ -289,7 +289,7 @@ export async function setupProject(
       const codegraph = await generateCodegraph(projectPath, { debug });
       tracker.complete(
         "codegraph",
-        `${codegraph.modules.length} modules, ${Object.keys(codegraph.file_index).length} files`
+        `${codegraph.modules.length} modules`
       );
     } catch (codegraphError: any) {
       tracker.skip("codegraph", `error: ${codegraphError.message}`);

@@ -112,52 +112,7 @@ export interface Module {
   test_files: string[];
 }
 
-// ─── Section 3: Dependency Graph ────────────────────────────────────────────
-
-export type EdgeType =
-  | "calls"
-  | "extends"
-  | "implements"
-  | "type-only"
-  | "configures"
-  | "re-exports";
-
-export type EdgeDirection = "downstream" | "upstream";
-
-export interface DependencyEdge {
-  from: string;
-  to: string;
-  weight: number;
-  direction: EdgeDirection;
-  type: EdgeType;
-  symbols: string[];
-}
-
-export interface CoreModuleEntry {
-  id: string;
-  dependents: number;
-}
-
-export interface LeafModuleEntry {
-  id: string;
-}
-
-export interface DependencyGraph {
-  edges: DependencyEdge[];
-  core_modules: CoreModuleEntry[];
-  leaf_modules: LeafModuleEntry[];
-}
-
-// ─── Section 4: File Index ──────────────────────────────────────────────────
-
-export interface FileIndexEntry {
-  module_id: string;
-  last_modified: string;
-}
-
-export type FileIndex = Record<string, FileIndexEntry>;
-
-// ─── Section 5: Top-level Codegraph ─────────────────────────────────────────
+// ─── Top-level Codegraph ────────────────────────────────────────────────────
 
 export interface Codegraph {
   generated_at: string;
@@ -166,6 +121,4 @@ export interface Codegraph {
 
   project: ProjectProfile;
   modules: Module[];
-  dependencies: DependencyGraph;
-  file_index: FileIndex;
 }
