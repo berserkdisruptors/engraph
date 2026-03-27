@@ -81,7 +81,7 @@ describe("scanModules", () => {
     expect(libMod!.type).toBe("utility");
   });
 
-  it("classifies test directories and files correctly", async () => {
+  it("associates test files with source modules via convention matching", async () => {
     await touch(projectPath, "src/app.ts");
     await touch(projectPath, "tests/unit/app.test.ts");
     await touch(projectPath, "tests/helpers/setup.ts");
@@ -89,15 +89,15 @@ describe("scanModules", () => {
 
     const modules = await scanModules(projectPath);
 
-    // tests/ modules should be classified as test
-    const testUnitMod = modules.find((m) => m.id === "tests/unit");
-    expect(testUnitMod).toBeDefined();
-    expect(testUnitMod!.type).toBe("test");
+    // No test-type modules should exist — test files are on source modules
+    const testModules = modules.filter((m) => m.type === "test");
+    expect(testModules).toHaveLength(0);
 
-    // test helper modules under tests/ are also test type
-    const testHelpersMod = modules.find((m) => m.id === "tests/helpers");
-    expect(testHelpersMod).toBeDefined();
-    expect(testHelpersMod!.type).toBe("test");
+    // Test files should be associated with the matching source module
+    const rootMod = modules.find((m) => m.id === "root");
+    expect(rootMod).toBeDefined();
+    expect(rootMod!.test_files.some((f) => f.includes("app.test.ts"))).toBe(true);
+    expect(rootMod!.test_files.some((f) => f.includes("setup.ts"))).toBe(true);
   });
 
   it("separates test files from source files within a module", async () => {
@@ -176,10 +176,12 @@ describe("scanModules", () => {
     const ids = modules.map((m) => m.id);
     expect(ids).toContain("mypackage");
     expect(ids).toContain("mypackage/utils");
-    expect(ids).toContain("tests");
+    // No test module — test file is associated with a source module
+    expect(ids).not.toContain("tests");
 
-    const testMod = modules.find((m) => m.id === "tests");
-    expect(testMod!.type).toBe("test");
+    // test_models.py should be matched to a source module via convention
+    const allTestFiles = modules.flatMap((m) => m.test_files);
+    expect(allTestFiles.some((f) => f.includes("test_models.py"))).toBe(true);
   });
 
   it("handles empty directories — no modules with zero files", async () => {
@@ -233,17 +235,20 @@ describe("scanModules", () => {
     expect(rootMod!.files.some((f) => f.path.includes("commitlint.config.js"))).toBe(false);
   });
 
-  it("sets correct path for test modules outside source root", async () => {
+  it("associates test files outside source root with correct source module", async () => {
     await touch(projectPath, "src/app.ts");
     await touch(projectPath, "tests/unit/app.test.ts");
     await gitCommit(projectPath);
 
     const modules = await scanModules(projectPath);
 
-    const testMod = modules.find((m) => m.id === "tests/unit");
-    expect(testMod).toBeDefined();
-    // Path should be tests/unit, NOT src/tests/unit
-    expect(testMod!.path).toBe("tests/unit");
+    // No test-type module created
+    expect(modules.find((m) => m.id === "tests/unit")).toBeUndefined();
+
+    // Test file is on the source module
+    const rootMod = modules.find((m) => m.id === "root");
+    expect(rootMod).toBeDefined();
+    expect(rootMod!.test_files.some((f) => f.includes("app.test.ts"))).toBe(true);
   });
 });
 

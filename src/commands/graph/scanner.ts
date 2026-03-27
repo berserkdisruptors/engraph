@@ -78,6 +78,8 @@ const ENTRY_DIR_PATTERNS = [
  * - Detect modules from directory structure
  * - Classify module types (feature, utility, core, entry, test)
  * - Generate deterministic module IDs from paths
+ * - Associate test files with their source modules via convention-based
+ *   path matching (test directory structure mirrors source structure)
  */
 export async function scanModules(
   projectPath: string,
@@ -99,49 +101,80 @@ export async function scanModules(
     console.log(`[scanner] tracked source files: ${allFiles.length}`);
   }
 
-  // Filter out project-root config files that aren't under any source root
-  const sourceFiles = sourceRoots.length > 0
-    ? allFiles.filter((f) => sourceRoots.some((r) => f.startsWith(r + "/")))
-    : allFiles;
+  // ── Step 1: Separate source files from test files ────────────────────
+  const srcFiles: string[] = [];
+  const testFiles: string[] = [];
 
-  // Also include files under well-known non-source directories (tests, scripts)
-  const nonSourceFiles = sourceRoots.length > 0
-    ? allFiles.filter((f) => !sourceRoots.some((r) => f.startsWith(r + "/")) && f.includes("/"))
-    : [];
+  for (const file of allFiles) {
+    if (isTestFile(file)) {
+      testFiles.push(file);
+    } else {
+      srcFiles.push(file);
+    }
+  }
 
-  const relevantFiles = [...sourceFiles, ...nonSourceFiles];
+  // Filter source files to those under source roots or in subdirectories
+  const relevantSrcFiles = sourceRoots.length > 0
+    ? srcFiles.filter((f) => sourceRoots.some((r) => f.startsWith(r + "/")) || f.includes("/"))
+    : srcFiles;
 
-  // Group files by directory to detect modules
-  const dirFiles = groupFilesByDirectory(relevantFiles, projectPath, sourceRoots);
+  if (debug) {
+    console.log(`[scanner] source: ${relevantSrcFiles.length}, test: ${testFiles.length}`);
+  }
 
-  // Build modules from directory groups
+  // ── Step 2: Group source files by directory → modules ────────────────
+  const dirFiles = groupFilesByDirectory(relevantSrcFiles, sourceRoots);
   const modules: Module[] = [];
 
   for (const [moduleId, files] of dirFiles.entries()) {
-    const relativeDirPath = moduleIdToRelativePath(moduleId, sourceRoots, projectPath, files);
+    const relativeDirPath = moduleIdToRelativePath(moduleId, sourceRoots, files);
     const moduleType = classifyModuleType(moduleId, files, sourceRoots);
-
-    // Separate test files from source files
-    const sourceFiles: FileEntry[] = [];
-    const testFiles: string[] = [];
-
-    for (const filePath of files) {
-      if (isTestFile(filePath)) {
-        testFiles.push(filePath);
-      } else {
-        sourceFiles.push({ path: filePath, exports: [] });
-      }
-    }
 
     modules.push({
       id: moduleId,
       path: relativeDirPath,
       type: moduleType,
-      files: sourceFiles,
+      files: files.map((f) => ({ path: f, exports: [] })),
       imports: { internal: [], external: [] },
       imported_by: [],
-      test_files: testFiles,
+      test_files: [],
     });
+  }
+
+  // ── Step 3: Associate test files with source modules ─────────────────
+  // Convention-based: match test files to source modules using directory
+  // mirroring and filename matching. No test-type modules are created.
+  const sourceModuleIds = new Set(modules.map((m) => m.id));
+  const moduleMap = new Map(modules.map((m) => [m.id, m]));
+
+  // Build source file → module ID lookup for filename-based matching
+  const sourceFileToModule = new Map<string, string>();
+  for (const mod of modules) {
+    for (const file of mod.files) {
+      sourceFileToModule.set(file.path, mod.id);
+    }
+  }
+
+  const unmatchedTestFiles: string[] = [];
+
+  for (const testFile of testFiles) {
+    const matchedModuleId = matchTestFileToSourceModule(
+      testFile, sourceModuleIds, sourceFileToModule
+    );
+    if (matchedModuleId) {
+      moduleMap.get(matchedModuleId)!.test_files.push(testFile);
+    } else {
+      unmatchedTestFiles.push(testFile);
+    }
+  }
+
+  if (debug && unmatchedTestFiles.length > 0) {
+    console.log(`[scanner] ${unmatchedTestFiles.length} test files unmatched`);
+  }
+
+  // Sort test_files within each module for deterministic output
+  for (const mod of modules) {
+    mod.test_files.sort();
   }
 
   // Sort modules by ID for deterministic output
@@ -152,6 +185,70 @@ export async function scanModules(
   }
 
   return modules;
+}
+
+/**
+ * Match a test file to a source module using convention-based matching.
+ *
+ * Two strategies are tried in order:
+ *
+ * 1. **Directory matching** — progressively strip leading path segments from the
+ *    test file's directory until a source module ID matches:
+ *      tests/unit/commands/graph/scanner.test.ts → commands/graph
+ *      spec/models/user_spec.rb                  → models
+ *
+ * 2. **Filename matching** — extract the tested module name from the test filename
+ *    and find a source module containing a file with that base name:
+ *      tests/test_models.py → "models" → module containing models.py
+ *      tests/scanner.test.ts → "scanner" → module containing scanner.ts
+ *
+ * Falls back to "root" if it exists and no better match is found.
+ */
+function matchTestFileToSourceModule(
+  testFile: string,
+  sourceModuleIds: Set<string>,
+  sourceFileToModule: Map<string, string>
+): string | null {
+  const dir = path.dirname(testFile).replace(/\\/g, "/");
+  const segments = dir.split("/");
+
+  // Strategy 1: Progressively strip leading directory segments
+  for (let i = 1; i < segments.length; i++) {
+    const candidate = segments.slice(i).join("/");
+    if (sourceModuleIds.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  // Strategy 2: Filename-based matching
+  // Extract the core name from test file conventions:
+  //   scanner.test.ts → scanner
+  //   test_models.py  → models
+  //   user_spec.rb    → user
+  const basename = path.basename(testFile);
+  const coreName = basename
+    .replace(/\.(test|spec)\.[^.]+$/, "")  // scanner.test.ts → scanner
+    .replace(/^test_/, "")                  // test_models.py → models.py → models
+    .replace(/_test\.[^.]+$/, "")           // models_test.go → models
+    .replace(/_spec\.[^.]+$/, "")           // user_spec.rb → user
+    .replace(/\.[^.]+$/, "");               // strip remaining extension
+
+  if (coreName) {
+    for (const [srcFile, moduleId] of sourceFileToModule) {
+      const srcBasename = path.basename(srcFile);
+      const srcName = srcBasename.replace(/\.[^.]+$/, "");
+      if (srcName === coreName) {
+        return moduleId;
+      }
+    }
+  }
+
+  // Fallback: match to "root" for general test infrastructure
+  if (sourceModuleIds.has("root")) {
+    return "root";
+  }
+
+  return null;
 }
 
 /**
@@ -250,16 +347,16 @@ async function walkDirectory(
 }
 
 /**
- * Group files by their directory and produce module IDs.
+ * Group source files by their directory and produce module IDs.
  *
  * Module IDs are path-derived, relative to the source root.
  * For example, `src/commands/init/index.ts` → module ID `commands/init`.
  *
- * A directory qualifies as a module if it contains at least one source file.
+ * Only source files are grouped here — test files are associated
+ * separately via convention-based matching in scanModules.
  */
 function groupFilesByDirectory(
   files: string[],
-  projectPath: string,
   sourceRoots: string[]
 ): Map<string, string[]> {
   const dirFiles = new Map<string, string[]>();
@@ -323,7 +420,6 @@ export function deriveModuleId(
 function moduleIdToRelativePath(
   moduleId: string,
   sourceRoots: string[],
-  _projectPath: string,
   files: string[]
 ): string {
   if (moduleId === "root") {
