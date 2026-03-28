@@ -11,6 +11,7 @@ import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
 import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { ensureEngraphInstructionFiles } from "../../utils/agent-instructions.js";
+import { ensureGitignoreEntries } from "../../utils/index.js";
 import { generateCodegraph } from "../graph/index.js";
 
 /**
@@ -445,6 +446,9 @@ export async function executeUpgrade(
           console.log(chalk.yellow(`\n[DEBUG] Migration error: ${migrationError.message}`));
         }
       }
+
+      // Ensure .gitignore includes engraph generated files
+      ensureGitignoreEntries(projectPath, { debug });
 
       // Regenerate codegraph — deterministic structural scan of the codebase
       tracker.start("codegraph");

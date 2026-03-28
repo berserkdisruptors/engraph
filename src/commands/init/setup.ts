@@ -7,6 +7,7 @@ import {
   ensureExecutableScripts,
   isGitRepo,
   initGitRepo,
+  ensureGitignoreEntries,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
 import { mergeAgentSettings } from "../../utils/settings-merge.js";
@@ -221,47 +222,8 @@ export async function setupProject(
 
     tracker.complete("config", ".engraph/engraph.json");
 
-    // Ensure engraph.json and .temp folder are in .gitignore
-    const gitignorePath = path.join(projectPath, ".gitignore");
-    if (await fs.pathExists(gitignorePath)) {
-      let gitignoreContent = await fs.readFile(gitignorePath, "utf8");
-      let modified = false;
-
-      // Ensure engraph generated files are in gitignore
-      const engraphIgnoreEntries = [
-        ".engraph/engraph.json",
-        ".engraph/_codegraph.yaml",
-      ];
-
-      for (const entry of engraphIgnoreEntries) {
-        if (!gitignoreContent.includes(entry)) {
-          gitignoreContent = gitignoreContent.trimEnd() + "\n" + entry + "\n";
-          modified = true;
-
-          if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: added ${entry}`));
-          }
-        }
-      }
-
-      // Legacy cleanup: replace .current-spec with engraph.json if still present
-      if (gitignoreContent.includes(".engraph/.current-spec")) {
-        gitignoreContent = gitignoreContent.replace(
-          ".engraph/.current-spec",
-          ".engraph/engraph.json"
-        );
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: replaced .current-spec with engraph.json`));
-        }
-      }
-
-      // Write the file only if modifications were made
-      if (modified) {
-        await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
-      }
-    }
+    // Ensure engraph generated files are in .gitignore
+    ensureGitignoreEntries(projectPath, { debug });
 
     // Merge agent settings for all successful agents
     tracker.start("merge-settings");
