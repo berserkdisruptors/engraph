@@ -227,27 +227,33 @@ export async function setupProject(
       let gitignoreContent = await fs.readFile(gitignorePath, "utf8");
       let modified = false;
 
-      // Check if engraph.json is already in gitignore
-      if (!gitignoreContent.includes(".engraph/engraph.json")) {
-        // Check if .current-spec exists and replace it, or just add engraph.json
-        if (gitignoreContent.includes(".engraph/.current-spec")) {
-          gitignoreContent = gitignoreContent.replace(
-            ".engraph/.current-spec",
-            ".engraph/engraph.json"
-          );
+      // Ensure engraph generated files are in gitignore
+      const engraphIgnoreEntries = [
+        ".engraph/engraph.json",
+        ".engraph/_codegraph.yaml",
+      ];
+
+      for (const entry of engraphIgnoreEntries) {
+        if (!gitignoreContent.includes(entry)) {
+          gitignoreContent = gitignoreContent.trimEnd() + "\n" + entry + "\n";
           modified = true;
 
           if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: replaced .current-spec with engraph.json`));
+            console.log(chalk.gray(`\nUpdated .gitignore: added ${entry}`));
           }
-        } else {
-          // Add engraph.json to gitignore
-          gitignoreContent = gitignoreContent.trimEnd() + "\n.engraph/engraph.json\n";
-          modified = true;
+        }
+      }
 
-          if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: added engraph.json`));
-          }
+      // Legacy cleanup: replace .current-spec with engraph.json if still present
+      if (gitignoreContent.includes(".engraph/.current-spec")) {
+        gitignoreContent = gitignoreContent.replace(
+          ".engraph/.current-spec",
+          ".engraph/engraph.json"
+        );
+        modified = true;
+
+        if (debug) {
+          console.log(chalk.gray(`\nUpdated .gitignore: replaced .current-spec with engraph.json`));
         }
       }
 
