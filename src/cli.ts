@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
+import path from "path";
+import fs from "fs-extra";
 import { Command } from "commander";
 import chalk from "chalk";
 import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
+import { generateCodegraph } from "./commands/graph/index.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -207,6 +210,30 @@ program
   .description("Check that all required tools are installed")
   .action(() => {
     checkCommand();
+  });
+
+program
+  .command("graph")
+  .description("Regenerate the codegraph (.engraph/_codegraph.yaml)")
+  .option("--debug", "Show verbose diagnostic output")
+  .action(async (options) => {
+    const projectPath = process.cwd();
+    const engraphDir = path.join(projectPath, ".engraph");
+    if (!(await fs.pathExists(engraphDir))) {
+      console.error(
+        chalk.red(
+          "No .engraph/ directory found. Run 'engraph init --here' first."
+        )
+      );
+      process.exit(1);
+    }
+
+    const codegraph = await generateCodegraph(projectPath, {
+      debug: options.debug,
+    });
+    console.log(
+      chalk.green(`Codegraph updated: ${codegraph.modules.length} modules`)
+    );
   });
 
 program.parse(process.argv);
