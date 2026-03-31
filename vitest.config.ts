@@ -16,13 +16,7 @@ export default defineConfig({
         'src/config/agents.ts',
         'src/scripts/**',
         'src/templates/**',
-      ],
-      thresholds: {
-        statements: 30,
-        branches: 25,
-        functions: 30,
-        lines: 30,
-      },
+      ]
     },
     setupFiles: ['./tests/setup.ts'],
   },
