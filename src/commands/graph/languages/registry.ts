@@ -1,0 +1,79 @@
+/**
+ * Extension → LanguageExtractor registry.
+ *
+ * Extractors are lazily loaded via dynamic imports so only the grammars
+ * for detected languages are ever instantiated.
+ */
+
+import type { LanguageExtractor } from "./types.js";
+
+type ExtractorFactory = () => Promise<LanguageExtractor>;
+
+const EXTRACTOR_MAP: Record<string, ExtractorFactory> = {
+  // TypeScript
+  ".ts": () => import("./typescript.js").then((m) => m.typescriptExtractor),
+  ".tsx": () => import("./typescript.js").then((m) => m.tsxExtractor),
+  // JavaScript
+  ".js": () => import("./javascript.js").then((m) => m.javascriptExtractor),
+  ".jsx": () => import("./javascript.js").then((m) => m.javascriptExtractor),
+  ".mjs": () => import("./javascript.js").then((m) => m.javascriptExtractor),
+  ".cjs": () => import("./javascript.js").then((m) => m.javascriptExtractor),
+  // Python
+  ".py": () => import("./python.js").then((m) => m.pythonExtractor),
+  // Go
+  ".go": () => import("./go.js").then((m) => m.goExtractor),
+  // Rust
+  ".rs": () => import("./rust.js").then((m) => m.rustExtractor),
+  // Java
+  ".java": () => import("./java.js").then((m) => m.javaExtractor),
+  // Kotlin
+  ".kt": () => import("./kotlin.js").then((m) => m.kotlinExtractor),
+  ".kts": () => import("./kotlin.js").then((m) => m.kotlinExtractor),
+  // C#
+  ".cs": () => import("./csharp.js").then((m) => m.csharpExtractor),
+  // C
+  ".c": () => import("./c.js").then((m) => m.cExtractor),
+  ".h": () => import("./c.js").then((m) => m.cExtractor),
+  // C++
+  ".cpp": () => import("./cpp.js").then((m) => m.cppExtractor),
+  ".hpp": () => import("./cpp.js").then((m) => m.cppExtractor),
+  ".cc": () => import("./cpp.js").then((m) => m.cppExtractor),
+  ".hh": () => import("./cpp.js").then((m) => m.cppExtractor),
+  // Ruby
+  ".rb": () => import("./ruby.js").then((m) => m.rubyExtractor),
+  // PHP
+  ".php": () => import("./php.js").then((m) => m.phpExtractor),
+  // Swift
+  ".swift": () => import("./swift.js").then((m) => m.swiftExtractor),
+};
+
+/** Cache: extension → extractor instance (already loaded) */
+const loadedExtractors = new Map<string, LanguageExtractor>();
+
+/**
+ * Get the extractor for a file extension. Returns null if unsupported.
+ * Caches loaded extractors so each is only imported once.
+ */
+export async function getExtractor(
+  ext: string
+): Promise<LanguageExtractor | null> {
+  const cached = loadedExtractors.get(ext);
+  if (cached) return cached;
+
+  const factory = EXTRACTOR_MAP[ext];
+  if (!factory) return null;
+
+  const extractor = await factory();
+  loadedExtractors.set(ext, extractor);
+  return extractor;
+}
+
+/** Get all registered extensions */
+export function getRegisteredExtensions(): string[] {
+  return Object.keys(EXTRACTOR_MAP);
+}
+
+/** Reset the cache (for testing) */
+export function resetExtractorCache(): void {
+  loadedExtractors.clear();
+}

@@ -7,12 +7,14 @@ import {
   ensureExecutableScripts,
   isGitRepo,
   initGitRepo,
+  ensureGitignoreEntries,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
 import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { AGENT_FOLDER_MAP } from "../../constants.js";
 import { ensureEngraphInstructionFiles } from "../../utils/agent-instructions.js";
+import { generateCodegraph } from "../graph/index.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -49,6 +51,7 @@ export async function setupProject(
         ["chmod", "Ensure scripts executable"],
         ["config", "Create configuration file"],
         ["merge-settings", "Merge agent settings"],
+        ["codegraph", "Generate codegraph"],
         ["git", "Initialize git repository"],
         ["final", "Finalize"],
       ]
@@ -61,6 +64,7 @@ export async function setupProject(
         ["chmod", "Ensure scripts executable"],
         ["config", "Create configuration file"],
         ["merge-settings", "Merge agent settings"],
+        ["codegraph", "Generate codegraph"],
         ["cleanup", "Cleanup"],
         ["git", "Initialize git repository"],
         ["final", "Finalize"],
@@ -218,41 +222,8 @@ export async function setupProject(
 
     tracker.complete("config", ".engraph/engraph.json");
 
-    // Ensure engraph.json and .temp folder are in .gitignore
-    const gitignorePath = path.join(projectPath, ".gitignore");
-    if (await fs.pathExists(gitignorePath)) {
-      let gitignoreContent = await fs.readFile(gitignorePath, "utf8");
-      let modified = false;
-
-      // Check if engraph.json is already in gitignore
-      if (!gitignoreContent.includes(".engraph/engraph.json")) {
-        // Check if .current-spec exists and replace it, or just add engraph.json
-        if (gitignoreContent.includes(".engraph/.current-spec")) {
-          gitignoreContent = gitignoreContent.replace(
-            ".engraph/.current-spec",
-            ".engraph/engraph.json"
-          );
-          modified = true;
-
-          if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: replaced .current-spec with engraph.json`));
-          }
-        } else {
-          // Add engraph.json to gitignore
-          gitignoreContent = gitignoreContent.trimEnd() + "\n.engraph/engraph.json\n";
-          modified = true;
-
-          if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: added engraph.json`));
-          }
-        }
-      }
-
-      // Write the file only if modifications were made
-      if (modified) {
-        await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
-      }
-    }
+    // Ensure engraph generated files are in .gitignore
+    ensureGitignoreEntries(projectPath, { debug });
 
     // Merge agent settings for all successful agents
     tracker.start("merge-settings");
@@ -278,6 +249,21 @@ export async function setupProject(
       tracker.complete("merge-settings", detail);
     } else {
       tracker.skip("merge-settings", "no agents required settings merge");
+    }
+
+    // Generate codegraph — deterministic structural scan of the codebase
+    tracker.start("codegraph");
+    try {
+      const codegraph = await generateCodegraph(projectPath, { debug });
+      tracker.complete(
+        "codegraph",
+        `${codegraph.modules.length} modules`
+      );
+    } catch (codegraphError: any) {
+      tracker.skip("codegraph", `error: ${codegraphError.message}`);
+      if (debug) {
+        console.log(chalk.gray(`\n[DEBUG] Codegraph error: ${codegraphError.message}`));
+      }
     }
 
     // Ensure root instruction files include Engraph context guidance.
