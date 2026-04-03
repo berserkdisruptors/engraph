@@ -1,6 +1,6 @@
 {
   "name": "engraph",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Engraph - The context layer for agentic coding",
   "type": "module",
   "main": "dist/cli.js",
