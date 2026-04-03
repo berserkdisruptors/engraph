@@ -60,6 +60,8 @@
     "gradient-string": "^2.0.2",
     "log-symbols": "^6.0.0",
     "ora": "^8.0.1",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.24.7",
     "which": "^4.0.0",
     "yaml": "^2.7.0"
   },

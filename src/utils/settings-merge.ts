@@ -54,11 +54,32 @@ const CLAUDE_HOOKS_CONFIG: HooksConfig = {
       ],
     },
   ],
+  PostToolUse: [
+    {
+      matcher: "Write",
+      hooks: [
+        {
+          type: "command",
+          command: ".claude/hooks/sync-codegraph.sh",
+        },
+      ],
+    },
+    {
+      matcher: "Edit",
+      hooks: [
+        {
+          type: "command",
+          command: ".claude/hooks/sync-codegraph.sh",
+        },
+      ],
+    },
+  ],
 };
 
 /**
  * Cursor hooks configuration.
  * preToolUse hook for Task tool redirection (explore → engraph-explorer).
+ * postToolUse hook for codegraph sync after file edits.
  */
 const CURSOR_HOOKS_CONFIG = {
   version: 1,
@@ -67,6 +88,16 @@ const CURSOR_HOOKS_CONFIG = {
       {
         matcher: "Task",
         command: ".cursor/hooks/setup-explorer-subagent.sh",
+      },
+    ],
+    postToolUse: [
+      {
+        matcher: "Write",
+        command: ".cursor/hooks/sync-codegraph.sh",
+      },
+      {
+        matcher: "Edit",
+        command: ".cursor/hooks/sync-codegraph.sh",
       },
     ],
   },
@@ -271,7 +302,8 @@ async function mergeCursorSettings(
     debug
   );
 
-  const hooksAdded = CURSOR_HOOKS_CONFIG.hooks.preToolUse.length;
+  const hooksAdded = CURSOR_HOOKS_CONFIG.hooks.preToolUse.length +
+    CURSOR_HOOKS_CONFIG.hooks.postToolUse.length;
 
   if (debug) {
     console.log(chalk.gray(`[settings-merge] Cursor hooks entries: ${hooksAdded}`));
@@ -288,17 +320,13 @@ async function mergeCursorSettings(
 }
 
 /**
- * OpenCode: write plugin file to .opencode/plugins/
+ * OpenCode plugin definitions.
+ * Each entry is written as a separate .ts file in .opencode/plugins/.
  */
-async function mergeOpenCodeSettings(
-  projectPath: string,
-  debug: boolean
-): Promise<MergeResult> {
-  const pluginsDir = path.join(projectPath, ".opencode", "plugins");
-  await fs.ensureDir(pluginsDir);
-
-  const pluginPath = path.join(pluginsDir, "engraph-explorer-redirect.ts");
-  const pluginContent = `export default async ({ project, client, $, directory, worktree }) => {
+const OPENCODE_PLUGINS: Array<{ filename: string; content: string }> = [
+  {
+    filename: "engraph-explorer-redirect.ts",
+    content: `export default async ({ project, client, $, directory, worktree }) => {
   return {
     tool: {
       execute: {
@@ -311,20 +339,57 @@ async function mergeOpenCodeSettings(
     },
   };
 };
-`;
+`,
+  },
+  {
+    filename: "engraph-codegraph-sync.ts",
+    content: `export default async ({ project, client, $, directory, worktree }) => {
+  return {
+    tool: {
+      execute: {
+        after: async (input, output) => {
+          if (input.tool === "write" || input.tool === "edit") {
+            try {
+              await $\`npx engraph graph 2>/dev/null\`;
+            } catch {
+              // Codegraph sync should never block the agent flow
+            }
+          }
+        },
+      },
+    },
+  };
+};
+`,
+  },
+];
 
-  const existed = await fs.pathExists(pluginPath);
-  await fs.writeFile(pluginPath, pluginContent, "utf8");
+/**
+ * OpenCode: write plugin files to .opencode/plugins/
+ */
+async function mergeOpenCodeSettings(
+  projectPath: string,
+  debug: boolean
+): Promise<MergeResult> {
+  const pluginsDir = path.join(projectPath, ".opencode", "plugins");
+  await fs.ensureDir(pluginsDir);
 
-  if (debug) {
-    console.log(chalk.gray(`[settings-merge] Wrote OpenCode plugin to: ${pluginPath}`));
+  let pluginsWritten = 0;
+  for (const plugin of OPENCODE_PLUGINS) {
+    const pluginPath = path.join(pluginsDir, plugin.filename);
+    await fs.writeFile(pluginPath, plugin.content, "utf8");
+    pluginsWritten++;
+
+    if (debug) {
+      console.log(chalk.gray(`[settings-merge] Wrote OpenCode plugin to: ${pluginPath}`));
+    }
   }
 
   return {
     merged: true,
     skipped: false,
-    reason: existed ? "replaced existing plugin" : "created new plugin",
-    hooksAdded: 1,
+    reason: `${pluginsWritten} plugin(s) written`,
+    hooksAdded: pluginsWritten,
   };
 }
 

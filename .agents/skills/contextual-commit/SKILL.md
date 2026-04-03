@@ -39,7 +39,21 @@ Follow Conventional Commits exactly. Nothing changes here:
 
 Each line in the body follows: `action-type(scope): description`
 
-**scope** is a human-readable concept label — the domain area, module, or concern. Examples: `auth`, `payment-flow`, `oauth-library`, `session-store`, `api-contracts`. Use whatever is meaningful in this project's vocabulary. Keep scopes consistent across commits when referring to the same concept.
+**scope** is derived from the project's codegraph module IDs — the deterministic, path-based identifiers generated in `.engraph/_codegraph.yaml`. Convert `/` to `-` for conventional commit compatibility.
+
+**How to determine scope:**
+
+1. **Check the codegraph** — read `.engraph/_codegraph.yaml` and find which module the changed files belong to. The module `id` field is your scope (with `/` → `-`).
+2. **Subject line scope** — use the module ID of the primary changed module. If the commit touches multiple modules, use their lowest common ancestor prefix (e.g., files in `commands/init` and `commands/upgrade` → scope is `commands`).
+3. **Action line scopes** — each action line can use a different module scope to indicate which module the reasoning applies to. This enables agents to filter action lines by module.
+
+**Examples of scope derivation:**
+- File `src/commands/graph/scanner.ts` → module `commands/graph` → scope `commands-graph`
+- File `src/utils/config.ts` → module `utils` → scope `utils`
+- Files across `commands/init` and `commands/upgrade` → scope `commands`
+- File `src/cli.ts` → module `root` → scope `root`
+
+**If no codegraph exists** (project hasn't run `engraph init`), fall back to human-readable concept labels as scope — the domain area, module, or concern. Examples: `auth`, `payment-flow`, `api-contracts`.
 
 ## Action Types
 
@@ -98,9 +112,10 @@ Determine the commit scope, then compose action lines:
 1. **Check for staged changes first** — run `git diff --cached --stat`.
    - **If staged changes exist:** these are the commit scope. Do not consider unstaged or untracked files — the user has already expressed what belongs in this commit by staging it.
    - **If nothing is staged:** consider all unstaged modifications and untracked files as candidates. Use session context and the diff to decide what to stage and commit.
-2. **Identify what you have session context for** — changes you produced, discussed, or observed reasoning for during this conversation.
-3. **Identify what you don't** — files or changes from a prior session, another agent, or manual edits outside this conversation.
-4. **Write action lines accordingly:**
+2. **Resolve scopes from the codegraph** — if `.engraph/_codegraph.yaml` exists, read it and map each changed file to its module ID. Use these module IDs (with `/` → `-`) as scopes. If the codegraph doesn't exist, use human-readable concept labels.
+3. **Identify what you have session context for** — changes you produced, discussed, or observed reasoning for during this conversation.
+4. **Identify what you don't** — files or changes from a prior session, another agent, or manual edits outside this conversation.
+5. **Write action lines accordingly:**
    - For changes you have context for: full action lines from session knowledge.
    - For changes you don't: apply the "When You Lack Conversation Context" rules below — write only what the diff evidences.
 
@@ -186,7 +201,7 @@ Contextual commits work with every standard git workflow. No special handling ne
 2. **Action lines go in the body only.** Never in the subject line.
 3. **Only write action lines that carry signal.** If the diff already explains it, don't repeat it. If there was nothing to decide, reject, or discover, write no action lines.
 4. **Be concise but complete.** Each action line should be a single clear statement. No artificial length limits, but don't write essays either.
-5. **Use consistent scopes within a project.** If you called it `auth` in one commit, don't call it `authentication` in the next.
+5. **Use codegraph module IDs as scopes.** Scopes are derived from `.engraph/_codegraph.yaml` module IDs (with `/` converted to `-`). This ensures consistency across commits — every agent and human uses the same deterministic vocabulary. If no codegraph exists, use consistent human-readable labels.
 6. **Capture the user's intent in their words.** For `intent` lines, reflect what the human asked for, not your implementation summary.
 7. **Always explain why for `rejected` lines.** A rejection without a reason is useless — the next agent will just re-propose it.
 8. **Don't invent action lines for trivial commits.** A typo fix, a dependency bump, a formatting change — the conventional commit subject is enough.
