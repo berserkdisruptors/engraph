@@ -214,7 +214,7 @@ program
 
 program
   .command("graph")
-  .description("Regenerate the codegraph (.engraph/_codegraph.yaml)")
+  .description("Regenerate the codegraph (.engraph/codegraph/)")
   .option("--debug", "Show verbose diagnostic output")
   .action(async (options) => {
     const projectPath = process.cwd();
