@@ -110,6 +110,7 @@ export interface Module {
   imports: ModuleImports;
   imported_by: ImportedByEntry[];
   test_files: string[];
+  sub_graph?: string;
 }
 
 // ─── Top-level Codegraph ────────────────────────────────────────────────────
