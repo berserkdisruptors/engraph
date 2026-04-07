@@ -106,8 +106,11 @@ function stripSubGraph(mod: Module): Omit<Module, "sub_graph"> {
 /**
  * Write the codegraph to a recursive codegraph/ directory structure.
  *
- * Root codegraph/index.yaml is always a single file with all top-level modules.
- * Sub-graphs are created when children at a given level exceed the line budget.
+ * Root codegraph/index.yaml contains only level-0 modules. Any level-0 module
+ * with children always gets a sub_graph — children never appear in the root file.
+ *
+ * At deeper levels, the 500-line budget determines whether to further split:
+ * children are inlined into the sub-graph file unless doing so exceeds the budget.
  */
 export async function writeCodegraph(
   projectPath: string,
@@ -121,8 +124,8 @@ export async function writeCodegraph(
 
   const tree = buildModuleTree(codegraph.modules);
 
-  // Root index.yaml — always a single file, never split
-  const rootModules = serializeLevel(tree, codegraphDir, "codegraph");
+  // Root index.yaml — only level-0 modules, children always split out
+  const rootModules = serializeRootLevel(tree, codegraphDir);
   const rootContent = {
     generated_at: codegraph.generated_at,
     generator_version: codegraph.generator_version,
@@ -136,12 +139,37 @@ export async function writeCodegraph(
 }
 
 /**
- * Serialize a level of the module tree. For each node, decide whether to
- * inline its children or split them into a sub-graph.
- *
- * Returns the module entries for this level (with sub_graph set where needed).
+ * Serialize root level: every module with children gets a sub_graph — always.
+ * Children never appear in the root file.
  */
-function serializeLevel(
+function serializeRootLevel(
+  nodes: ModuleNode[],
+  codegraphDir: string
+): Module[] {
+  const result: Module[] = [];
+
+  for (const node of nodes) {
+    if (node.children.length === 0) {
+      result.push(stripSubGraphField(node.module));
+    } else {
+      // Always split children into a sub-graph at root level
+      const subDir = path.join(codegraphDir, node.module.id);
+      const subRelPath = `codegraph/${node.module.id}/index.yaml`;
+
+      writeSubGraph(node.children, subDir, `codegraph/${node.module.id}`);
+      result.push({ ...stripSubGraphField(node.module), sub_graph: subRelPath });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Serialize a sub-graph level. For each node with children, check whether
+ * inlining them would push this file over the line budget. If so, split
+ * them into a deeper sub-graph. Otherwise, inline them in this file.
+ */
+function serializeSubLevel(
   nodes: ModuleNode[],
   codegraphDir: string,
   codegraphRelPrefix: string
@@ -150,26 +178,23 @@ function serializeLevel(
 
   for (const node of nodes) {
     if (node.children.length === 0) {
-      // Leaf module — always inline
       result.push(stripSubGraphField(node.module));
     } else {
-      // Module with children — check if inlining children exceeds budget
-      const childLines = estimateGroupLines(node.children);
+      // Check if inlining all descendants would exceed the budget
+      const allDescendants = collectDescendants(node);
+      const inlinedLines = estimateGroupLines(allDescendants);
 
-      if (childLines <= SUB_GRAPH_BUDGET) {
-        // Inline: add this module + recursively inline children
+      if (inlinedLines <= SUB_GRAPH_BUDGET) {
+        // Inline: add this module + all descendants in this file
         result.push(stripSubGraphField(node.module));
-        const inlinedChildren = serializeLevel(node.children, codegraphDir, codegraphRelPrefix);
+        const inlinedChildren = serializeSubLevel(node.children, codegraphDir, codegraphRelPrefix);
         result.push(...inlinedChildren);
       } else {
-        // Split: create a sub-graph for this module's children
+        // Split: create a deeper sub-graph
         const subDir = path.join(codegraphDir, node.module.id);
         const subRelPath = `${codegraphRelPrefix}/${node.module.id}/index.yaml`;
 
-        // Write sub-graph index.yaml
         writeSubGraph(node.children, subDir, `${codegraphRelPrefix}/${node.module.id}`);
-
-        // Add parent module with sub_graph reference
         result.push({ ...stripSubGraphField(node.module), sub_graph: subRelPath });
       }
     }
@@ -179,7 +204,20 @@ function serializeLevel(
 }
 
 /**
+ * Collect all descendant nodes (flattened) for line estimation.
+ */
+function collectDescendants(node: ModuleNode): ModuleNode[] {
+  const result: ModuleNode[] = [];
+  for (const child of node.children) {
+    result.push(child);
+    result.push(...collectDescendants(child));
+  }
+  return result;
+}
+
+/**
  * Write a sub-graph index.yaml for a set of child module nodes.
+ * Uses budget-based splitting for deeper levels.
  */
 function writeSubGraph(
   nodes: ModuleNode[],
@@ -188,7 +226,7 @@ function writeSubGraph(
 ): void {
   fs.ensureDirSync(subDir);
 
-  const modules = serializeLevel(nodes, path.dirname(subDir), codegraphRelPrefix);
+  const modules = serializeSubLevel(nodes, path.dirname(subDir), codegraphRelPrefix);
   const content = { modules };
   const yaml = YAML_HEADER + stringify(content, { lineWidth: 120 });
   fs.writeFileSync(path.join(subDir, "index.yaml"), yaml, "utf8");
