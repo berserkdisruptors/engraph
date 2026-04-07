@@ -104,12 +104,14 @@ export interface FileEntry {
 
 export interface Module {
   id: string;
+  alias?: string;
   path: string;
   type: ModuleType;
   files: FileEntry[];
   imports: ModuleImports;
   imported_by: ImportedByEntry[];
   test_files: string[];
+  sub_graph?: string;
 }
 
 // ─── Top-level Codegraph ────────────────────────────────────────────────────

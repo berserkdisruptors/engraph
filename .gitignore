@@ -32,4 +32,4 @@ dist/
 
 # Test coverage
 coverage/
-.engraph/_codegraph.yaml
+.engraph/codegraph/
