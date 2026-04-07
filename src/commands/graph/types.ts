@@ -104,6 +104,7 @@ export interface FileEntry {
 
 export interface Module {
   id: string;
+  alias?: string;
   path: string;
   type: ModuleType;
   files: FileEntry[];

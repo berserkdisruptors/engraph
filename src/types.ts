@@ -50,6 +50,7 @@ export interface EngraphConfig {
   framework: string;
   aiAssistants?: string[];
   version?: string;
+  aliases?: Record<string, string>;
 }
 
 export interface UpgradeOptions {

@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs-extra";
 import { stringify } from "yaml";
 import type { Codegraph, Module, ProjectProfile } from "./types.js";
+import { readEngraphConfig } from "../../utils/config.js";
 
 const SUB_GRAPH_BUDGET = 500;
 
@@ -101,6 +102,30 @@ function stripSubGraph(mod: Module): Omit<Module, "sub_graph"> {
   return rest;
 }
 
+// ─── Alias resolution ─────────────────────────────────────────────────────
+
+/**
+ * Validate alias uniqueness and apply aliases from engraph.json to modules.
+ * Silently skips alias entries whose module ID doesn't match any module.
+ */
+function applyAliases(modules: Module[], aliases: Record<string, string>): void {
+  const seen = new Map<string, string>();
+  for (const [moduleId, alias] of Object.entries(aliases)) {
+    if (seen.has(alias)) {
+      throw new Error(
+        `Duplicate alias "${alias}" for modules "${seen.get(alias)}" and "${moduleId}" in engraph.json`
+      );
+    }
+    seen.set(alias, moduleId);
+  }
+
+  const moduleMap = new Map(modules.map((m) => [m.id, m]));
+  for (const [moduleId, alias] of Object.entries(aliases)) {
+    const mod = moduleMap.get(moduleId);
+    if (mod) mod.alias = alias;
+  }
+}
+
 // ─── Recursive serializer ──────────────────────────────────────────────────
 
 /**
@@ -116,6 +141,12 @@ export async function writeCodegraph(
   projectPath: string,
   codegraph: Codegraph
 ): Promise<void> {
+  // Apply aliases from engraph.json before building the tree
+  const config = readEngraphConfig(projectPath);
+  if (config?.aliases && Object.keys(config.aliases).length > 0) {
+    applyAliases(codegraph.modules, config.aliases);
+  }
+
   const codegraphDir = path.join(projectPath, ".engraph", "codegraph");
 
   // Clean the entire codegraph directory before writing fresh output
@@ -236,6 +267,15 @@ function writeSubGraph(
  * Return a module without the sub_graph field (clean serialization).
  */
 function stripSubGraphField(mod: Module): Module {
-  const { sub_graph, ...rest } = mod;
-  return rest as Module;
+  const { sub_graph, alias, id, path: modPath, type, files, imports, imported_by, test_files } = mod;
+  return {
+    id,
+    ...(alias !== undefined && { alias }),
+    path: modPath,
+    type,
+    files,
+    imports,
+    imported_by,
+    test_files,
+  } as Module;
 }
