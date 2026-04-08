@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs-extra";
 import type { Codegraph } from "./types.js";
-import { scanModules, listTrackedSourceFiles, detectSourceRoots } from "./scanner.js";
+import { scanModules, listAllTrackedFiles, detectSourceRoots } from "./scanner.js";
 import { analyzeImports } from "./analyzer.js";
 import { detectProjectProfile } from "./profiler.js";
 import { writeCodegraph } from "./serializer.js";
@@ -38,7 +38,7 @@ export async function generateCodegraph(
   const modules = await scanModules(projectPath, { debug });
 
   // WP3 — Layer 2: Project profile + entry point detection
-  const allFiles = await listTrackedSourceFiles(projectPath);
+  const allFiles = await listAllTrackedFiles(projectPath);
   const project = await detectProjectProfile(projectPath, allFiles, modules, { debug });
 
   // WP4 — Layer 3: Import analysis via tree-sitter WASM
