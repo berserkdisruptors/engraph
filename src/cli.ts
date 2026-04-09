@@ -8,6 +8,9 @@ import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
 import { generateCodegraph } from "./commands/graph/index.js";
+import { lookupModules } from "./commands/lookup/index.js";
+import { recallModules } from "./commands/recall/index.js";
+import { searchModules } from "./commands/search/index.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -234,6 +237,53 @@ program
     console.log(
       chalk.green(`Codegraph and context index updated: ${codegraph.modules.length} modules`)
     );
+  });
+
+program
+  .command("lookup")
+  .description("Look up conventions and verification rules for given module IDs")
+  .argument("<modules...>", "Module IDs, aliases, or glob patterns")
+  .option("--debug", "Show verbose diagnostic output")
+  .action(async (modules: string[], options) => {
+    const projectPath = process.cwd();
+    const result = await lookupModules(projectPath, modules, {
+      debug: options.debug,
+    });
+    console.log(JSON.stringify(result, null, 2));
+  });
+
+program
+  .command("recall")
+  .description("Search contextual commit history for given module IDs")
+  .argument("<modules...>", "Module IDs, aliases, or glob patterns")
+  .option("--filter <types>", "Comma-separated action types to include")
+  .option("--limit <n>", "Max commits per search term (default: 50)", parseInt)
+  .option("--debug", "Show verbose diagnostic output")
+  .action(async (modules: string[], options) => {
+    const projectPath = process.cwd();
+    const result = await recallModules(projectPath, modules, {
+      debug: options.debug,
+      filter: options.filter?.split(","),
+      limit: options.limit,
+    });
+    console.log(JSON.stringify(result, null, 2));
+  });
+
+program
+  .command("search")
+  .description("Unified lookup + recall for given module IDs")
+  .argument("<modules...>", "Module IDs, aliases, or glob patterns")
+  .option("--filter <types>", "Comma-separated action types to include (recall only)")
+  .option("--limit <n>", "Max commits per search term (default: 50)", parseInt)
+  .option("--debug", "Show verbose diagnostic output")
+  .action(async (modules: string[], options) => {
+    const projectPath = process.cwd();
+    const result = await searchModules(projectPath, modules, {
+      debug: options.debug,
+      filter: options.filter?.split(","),
+      limit: options.limit,
+    });
+    console.log(JSON.stringify(result, null, 2));
   });
 
 program.parse(process.argv);
