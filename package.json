@@ -24,7 +24,8 @@
     "test:coverage": "vitest run --coverage",
     "commit": "cz",
     "prepublishOnly": "npm run build",
-    "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100"
+    "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100",
+    "upgrade": "npm run build && npm run create-release-packages && engraph upgrade --local"
   },
   "keywords": [
     "cli",

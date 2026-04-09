@@ -1,10 +1,12 @@
 import path from "path";
+import { createHash } from "crypto";
 import fs from "fs-extra";
 import type { Codegraph } from "./types.js";
-import { scanModules, listTrackedSourceFiles, detectSourceRoots } from "./scanner.js";
+import { scanModules, listAllTrackedFiles, detectSourceRoots } from "./scanner.js";
 import { analyzeImports } from "./analyzer.js";
 import { detectProjectProfile } from "./profiler.js";
 import { writeCodegraph } from "./serializer.js";
+import { regenerateContextIndex } from "./context-index.js";
 
 
 const GENERATOR_VERSION = "1.0.0";
@@ -38,7 +40,7 @@ export async function generateCodegraph(
   const modules = await scanModules(projectPath, { debug });
 
   // WP3 — Layer 2: Project profile + entry point detection
-  const allFiles = await listTrackedSourceFiles(projectPath);
+  const allFiles = await listAllTrackedFiles(projectPath);
   const project = await detectProjectProfile(projectPath, allFiles, modules, { debug });
 
   // WP4 — Layer 3: Import analysis via tree-sitter WASM
@@ -60,6 +62,13 @@ export async function generateCodegraph(
   if (debug) {
     console.log(`[codegraph] written to .engraph/codegraph/index.yaml`);
   }
+
+  // Regenerate context index (.engraph/context/_index.yaml)
+  const codegraphIndexPath = path.join(projectPath, ".engraph", "codegraph", "index.yaml");
+  const codegraphContent = await fs.readFile(codegraphIndexPath, "utf8");
+  const codegraphHash = createHash("sha256").update(codegraphContent).digest("hex").slice(0, 12);
+
+  await regenerateContextIndex(projectPath, codegraphHash, { debug });
 
   return codegraph;
 }

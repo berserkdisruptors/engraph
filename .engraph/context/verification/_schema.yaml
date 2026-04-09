@@ -7,10 +7,10 @@
 # It captures quality standards, test expectations, and known risks that
 # agents cannot infer from code alone.
 #
-# SOURCE OPTIONS:
-#   - extracted: Derived from PR comment analysis (GitHub Action)
-#   - manual: Manually documented by the team
-#   - hybrid: Combination of mining with human curation
+# PROVENANCE OPTIONS:
+#   - manual: Added explicitly by a developer via context-add
+#   - detected: Inferred from code patterns during cold start
+#   - generated: Synthesized from contextual commit history
 #
 # PRIMARY USE CASES:
 #   - CLI /build self-review: Pre-flight check before presenting to user
@@ -24,7 +24,8 @@ required_fields:
   - id                # Unique identifier (kebab-case)
   - name              # Human-readable name
   - type              # Must be "verification" (fixed value)
-  - source            # extracted | manual | hybrid
+  - triggered_by_modules # Which codegraph modules trigger this verification
+  - provenance        # Origin tracking: manual | detected | generated
   - created           # ISO date (YYYY-MM-DD)
   - last_updated      # ISO date (YYYY-MM-DD)
 
@@ -53,13 +54,25 @@ type:
   value: "verification"
   note: "This is a fixed value - all files in verification/ must have type: verification"
 
-source:
-  description: "How this verification context was populated"
+triggered_by_modules:
+  description: "Which codegraph modules trigger this verification when changed"
+  format: "Array of module IDs, aliases, or glob patterns"
+  patterns:
+    - "services/payment": "Exact match — verification triggered by one module"
+    - "services/*": "All direct children of services"
+    - "*": "All modules — global verification"
+  note: "The * wildcard matches any single path segment. No ** recursive pattern. Aliases are resolved to full module IDs before matching."
+  example:
+    - "services/*"
+    - "api/routes"
+
+provenance:
+  description: "Origin tracking — how this verification was created"
   values:
-    - extracted: "Derived from PR comment analysis by GitHub Action"
-    - manual: "Manually documented by the team"
-    - hybrid: "Combination of mining results with human curation"
-  example: "hybrid"
+    - manual: "Added explicitly by a developer via context-add. Not overwritable by generation pipeline."
+    - detected: "Inferred from code patterns during cold start. Refreshable by generation pipeline."
+    - generated: "Synthesized from contextual commit history. Refreshable by generation pipeline."
+  example: "manual"
 
 created:
   description: "Date when this verification context was first created"
@@ -159,7 +172,10 @@ example_file: |
   id: project-verification-standards
   name: "Project Verification Standards"
   type: verification
-  source: hybrid
+  triggered_by_modules:
+    - "services/*"
+    - "api/routes"
+  provenance: manual
   created: "2025-01-15"
   last_updated: "2025-09-20"
 

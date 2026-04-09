@@ -1,7 +1,11 @@
 id: release-package-verification
 name: Release Package Verification
 type: verification
-source: manual
+triggered_by_modules:
+  - "commands/init"
+  - "commands/upgrade"
+  - "templates/*"
+provenance: manual
 created: "2026-02-19"
 last_updated: "2026-02-20"
 
