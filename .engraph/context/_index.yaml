@@ -1,103 +1,61 @@
-# Engraph Context Graph Index & Coverage Map
-# This file serves as both the context index AND the context coverage map.
-
+# Engraph Context Index — Routing Table
+# Regenerated deterministically by `engraph graph`.
+# Source of truth: individual convention/verification YAML files.
+# If this file drifts or is missing, regenerate with `engraph graph`.
 version: "1.0"
-
-# ============================================================================
-# CONTEXT TAXONOMY OVERVIEW
-# ============================================================================
-#
-# The context graph is organized into three domains, each aligned with
-# the context taxonomy pillars that AI agents need most:
-#
-# 1. STRUCTURAL (structural/)
-#    Answers: WHAT exists already?
-#    Contains: Structural understanding of modules, features, components, and their relationships
-#
-# 2. CONVENTIONS (conventions/)
-#    Answers: HOW do we do things here?
-#    Contains: Coding standards, patterns, and practices
-#
-# 3. VERIFICATION (verification/)
-#    Answers: HOW do I know it's right?
-#    Contains: Quality standards, test expectations, known risks
-#
-# For more details on the context taxonomy, see:
-# https://buildforce.dev/engraph/concepts/context-taxonomy
-#
-
-# Timestamps (populated by context extraction on first run)
-generated_at: null
-last_updated: null
-
-# ============================================================================
-# CODEBASE PROFILE
-# ============================================================================
-# Populated by context extraction during initial codebase scan.
-# Provides high-level overview of the project for AI agents.
-
-codebase_profile:
-  languages: []           # e.g., [typescript, python]
-  frameworks: []          # e.g., [express, react, fastapi]
-  project_type: null      # e.g., "full-stack monorepo", "cli tool", "library"
-  scale: null             # e.g., "small (~5k LOC)", "medium (~45k LOC)"
-
-# ============================================================================
-# CONTEXT DOMAINS
-# ============================================================================
-# Each domain tracks both schema reference AND extracted items.
-# Items are discovered during codebase scan and populated during extraction.
-
-domains:
-  structural:
-    description: |
-      Structural context about WHAT exists in the codebase.
-      Contains understanding of modules, features, components, and their relationships.
-    schema: structural/_schema.yaml
-    coverage: 0
-    average_depth: none
-    items: []
-
-  conventions:
-    description: |
-      Convention context about HOW things are done here.
-      Contains coding standards, architectural patterns, and project practices.
-    schema: conventions/_schema.yaml
-    coverage: 0
-    average_depth: none
-    items: []
-    # Convention items also include: sub_type, enforcement
-
-  verification:
-    description: |
-      Verification context about HOW to know if code is right.
-      Contains quality standards, test expectations, review checklists, and known risks.
-    schema: verification/_schema.yaml
-    coverage: 0
-    average_depth: none
-    items: []
-    # Verification items also include: source (extracted | manual | hybrid)
-
-# ============================================================================
-# AGGREGATE SUMMARY
-# ============================================================================
-# Computed metrics across all domains. Updated after each extraction iteration.
-
-summary:
-  overall_coverage: 0
-  total_items: 0
-  extracted_items: 0
-  iterations_completed: 0
-
-# ============================================================================
-# EXTRACTION STATE
-# ============================================================================
-# Tracks state between context extraction invocations.
-# Enables continuation after /clear or session restart.
-
-extraction:
-  needs_clarification: []    # Questions that emerged during extraction
-  recommended_focus: []      # Suggested items for next iteration
-  # Format: - id: item-id
-  #           reason: "Why this item should be prioritized"
-  new_discoveries: []        # Items found but not yet in items arrays
+generated_at: 2026-04-08T18:17:32.428Z
+codegraph_hash: 2a56ccf91206
+conventions:
+  - id: agent-template-conventions
+    path: conventions/agent-template-conventions.yaml
+    applies_to_modules:
+      - templates/agents
+    provenance: manual
+  - id: error-handling-in-templates
+    path: conventions/error-handling-in-templates.yaml
+    applies_to_modules:
+      - templates/*
+    provenance: manual
+  - id: migration-conventions
+    path: conventions/migration-conventions.yaml
+    applies_to_modules:
+      - commands/upgrade/migrations
+    provenance: manual
+  - id: naming-conventions
+    path: conventions/naming-conventions.yaml
+    applies_to_modules:
+      - "*"
+    provenance: manual
+  - id: skill-creation-conventions
+    path: conventions/skill-creation-conventions.yaml
+    applies_to_modules:
+      - templates/skills/*
+    provenance: manual
+  - id: skill-naming-conventions
+    path: conventions/skill-naming-conventions.yaml
+    applies_to_modules:
+      - templates/skills/*
+    provenance: manual
+  - id: testing-conventions
+    path: conventions/testing-conventions.yaml
+    applies_to_modules:
+      - "*"
+    provenance: manual
+  - id: yaml-file-extension-convention
+    path: conventions/yaml-file-extension-convention.yaml
+    applies_to_modules:
+      - "*"
+    provenance: manual
+verification:
+  - id: release-package-verification
+    path: verification/release-package-verification.yaml
+    triggered_by_modules:
+      - commands/init
+      - commands/upgrade
+      - templates/*
+    provenance: manual
+  - id: testing-standards
+    path: verification/testing-standards.yaml
+    triggered_by_modules:
+      - "*"
+    provenance: manual

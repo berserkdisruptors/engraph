@@ -214,7 +214,7 @@ program
 
 program
   .command("graph")
-  .description("Regenerate the codegraph (.engraph/codegraph/)")
+  .description("Regenerate the codegraph and context index (.engraph/)")
   .option("--debug", "Show verbose diagnostic output")
   .action(async (options) => {
     const projectPath = process.cwd();
@@ -232,7 +232,7 @@ program
       debug: options.debug,
     });
     console.log(
-      chalk.green(`Codegraph updated: ${codegraph.modules.length} modules`)
+      chalk.green(`Codegraph and context index updated: ${codegraph.modules.length} modules`)
     );
   });
 

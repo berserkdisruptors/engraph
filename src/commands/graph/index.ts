@@ -1,10 +1,12 @@
 import path from "path";
+import { createHash } from "crypto";
 import fs from "fs-extra";
 import type { Codegraph } from "./types.js";
 import { scanModules, listAllTrackedFiles, detectSourceRoots } from "./scanner.js";
 import { analyzeImports } from "./analyzer.js";
 import { detectProjectProfile } from "./profiler.js";
 import { writeCodegraph } from "./serializer.js";
+import { regenerateContextIndex } from "./context-index.js";
 
 
 const GENERATOR_VERSION = "1.0.0";
@@ -60,6 +62,13 @@ export async function generateCodegraph(
   if (debug) {
     console.log(`[codegraph] written to .engraph/codegraph/index.yaml`);
   }
+
+  // Regenerate context index (.engraph/context/_index.yaml)
+  const codegraphIndexPath = path.join(projectPath, ".engraph", "codegraph", "index.yaml");
+  const codegraphContent = await fs.readFile(codegraphIndexPath, "utf8");
+  const codegraphHash = createHash("sha256").update(codegraphContent).digest("hex").slice(0, 12);
+
+  await regenerateContextIndex(projectPath, codegraphHash, { debug });
 
   return codegraph;
 }
