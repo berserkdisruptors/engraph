@@ -132,8 +132,9 @@ const TEST_FRAMEWORK_PACKAGES: Record<string, string> = {
 /**
  * Build a complete ProjectProfile from the project's files and manifests.
  *
- * Takes the already-collected list of all source files (from scanModules)
- * and the project path to read manifests.
+ * Takes the full list of tracked files (source + content) from the scanner.
+ * Language detection self-filters to programming language extensions via
+ * EXTENSION_TO_LANGUAGE, so passing content files here is safe.
  */
 export async function detectProjectProfile(
   projectPath: string,
@@ -153,7 +154,7 @@ export async function detectProjectProfile(
     testFilePaths.push(...mod.test_files);
   }
 
-  // 1. Detect languages from file extensions
+  // 1. Detect languages from file extensions (self-filters to code languages)
   const languages = detectLanguages(allFiles);
   if (debug) console.log(`[profiler] languages: ${languages.map((l) => l.name).join(", ")}`);
 

@@ -1,0 +1,169 @@
+id: naming-conventions
+name: "Naming Conventions"
+type: convention
+sub_type: naming-convention
+enforcement: recommended
+applies_to_modules:
+  - "*"
+provenance: manual
+created: "2026-01-26"
+last_updated: "2026-02-16"
+
+description: |
+  Naming conventions ensure consistency across the codebase. These rules apply to files,
+  variables, folders, and identifiers throughout the Buildforce CLI and context repository.
+
+  KEY PRINCIPLE: Names should be semantic and discoverable, reflecting component identity
+  rather than temporal or spec-specific information.
+
+file_naming:
+  context_files:
+    pattern: "kebab-case"
+    max_length: 50
+    examples:
+      - "slash-commands.yaml"
+      - "authentication.yaml"
+      - "error-handling.yaml"
+    counter_examples:
+      - "add-auth-jwt-20250122.yaml (spec-based, not semantic)"
+      - "001-slash-commands.yaml (numeric prefix)"
+      - "slashCommands.yaml (wrong case)"
+    rationale: "Semantic names enable discovery and outlive individual specs"
+
+  schema_files:
+    pattern: "_schema.yaml (underscore prefix)"
+    location: "Each domain folder root"
+    examples:
+      - "architecture/_schema.yaml"
+      - "conventions/_schema.yaml"
+      - "verification/_schema.yaml"
+    rationale: "Underscore prefix indicates meta-file, not content"
+
+  index_files:
+    pattern: "_index.yaml (underscore prefix)"
+    location: ".buildforce/context/_index.yaml"
+    rationale: "Single unified index for all domains; underscore indicates meta-file"
+
+  skill_files:
+    pattern: "SKILL.md in kebab-case directory"
+    examples:
+      - "context-extract/SKILL.md"
+      - "context-search/SKILL.md"
+    location: "src/templates/skills/"
+
+  agent_templates:
+    pattern: "buildforce-{domain}-{role}.md"
+    examples:
+      - "buildforce-structural-explorer.md"
+      - "buildforce-conventions-extractor.md"
+      - "buildforce-explorer.md"
+    location: "src/templates/agents/"
+
+  hook_scripts:
+    pattern: "descriptive-kebab-case.{sh,ts}"
+    examples:
+      - "setup-explorer-subagent.sh"
+      - "setup-explorer-subagent.ts"
+    location: "src/templates/hooks/{claude,cursor,opencode}/"
+
+folder_naming:
+  context_domains:
+    pattern: "singular-noun"
+    examples:
+      - "architecture/"
+      - "conventions/"
+      - "verification/"
+    location: ".buildforce/context/"
+    rationale: "Domain-based organization aligned with context taxonomy"
+
+variable_naming:
+  typescript:
+    pattern: "camelCase"
+    examples:
+      - "specId"
+      - "featurePath"
+      - "lastUpdated"
+      - "currentSession"
+    applies_to: "Variables, function parameters, object properties"
+
+  bash:
+    pattern: "UPPER_SNAKE_CASE"
+    examples:
+      - "SPEC_DIR"
+      - "BUILDFORCE_ROOT"
+      - "FEATURE_DIR"
+      - "FOLDER_NAME"
+    applies_to: "All bash script variables"
+
+  constants:
+    pattern: "UPPER_SNAKE_CASE (TypeScript) or UPPER_SNAKE_CASE (Bash)"
+    examples:
+      - "MINT_COLOR"
+      - "TAGLINE"
+
+identifier_naming:
+  context_ids:
+    pattern: "kebab-case"
+    max_length: 50
+    examples:
+      - "slash-commands"
+      - "template-only-slash-commands"
+      - "context-repository-pattern"
+    used_in: "_index.yaml items, context file id field"
+
+  requirement_ids:
+    pattern: "PREFIX + sequential number"
+    prefixes:
+      FR: "Functional Requirement (FR1, FR2, ...)"
+      NFR: "Non-Functional Requirement (NFR1, NFR2, ...)"
+      AC: "Acceptance Criteria (AC1, AC2, ...)"
+    examples:
+      - "FR1, FR2, FR3"
+      - "NFR1, NFR2"
+      - "AC1, AC2, AC3"
+
+edge_cases:
+  - case: "Context file for existing spec-driven feature"
+    rule: "Use component identity, NOT spec ID"
+    example: |
+      Spec: add-auth-jwt-20250122143052
+      Context file: authentication.yaml (NOT add-auth-jwt.yaml)
+    rationale: "Context outlives specs; component name is discoverable"
+
+  - case: "Multiple context files for same component"
+    rule: "Add descriptive suffix if truly separate concerns"
+    examples:
+      - "authentication.yaml (core auth)"
+      - "authentication-oauth.yaml (OAuth extension)"
+    rationale: "Avoid monolithic files; suffix indicates specific aspect"
+
+  - case: "Agent-specific files"
+    rule: "Use agent name in folder, not filename"
+    examples:
+      - ".claude/hooks/setup-explorer-subagent.sh"
+      - ".cursor/hooks/setup-explorer-subagent.sh"
+    rationale: "Same functionality, same filename, different agent folders"
+
+enforcement_mechanism:
+  context_files: "Enforced by template instructions in extract skill"
+  typescript: "tsconfig.json forceConsistentCasingInFileNames: true"
+  bash: "Convention only (no automated enforcement)"
+
+template: |
+  # Context file naming
+  {component-identity}.yaml  # Good: semantic, discoverable
+  {spec-id}.yaml             # Bad: tied to spec, not component
+
+  # Session folder naming
+  {slug}-{timestamp}         # add-auth-jwt-20250122143052
+
+  # TypeScript variables
+  const specId = '...'       # camelCase
+
+  # Bash variables
+  SPEC_DIR=".buildforce"     # UPPER_SNAKE_CASE
+
+reference_files:
+  - "tsconfig.json (forceConsistentCasingInFileNames)"
+  - "src/templates/skills/context-extract/SKILL.md (context file naming rules)"
+  - "src/templates/agents/buildforce-explorer.md (agent naming pattern)"

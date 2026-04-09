@@ -33,3 +33,4 @@ dist/
 # Test coverage
 coverage/
 .engraph/codegraph/
+.engraph/context/_index.yaml

@@ -3,7 +3,7 @@ import fs from "fs-extra";
 import { execSync } from "child_process";
 import type { Module, ModuleType, FileEntry } from "./types.js";
 
-// Source file extensions by language ecosystem
+// Source file extensions by language ecosystem (used for language detection + import analysis)
 const SOURCE_EXTENSIONS = new Set([
   // TypeScript / JavaScript
   ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
@@ -25,6 +25,25 @@ const SOURCE_EXTENSIONS = new Set([
   ".swift",
   // C#
   ".cs",
+]);
+
+// Non-source files that should still participate in module discovery.
+// The file extension itself is the deterministic signal — no lossy "kind" labels needed.
+const CONTENT_EXTENSIONS = new Set([
+  // Markup / documentation
+  ".md", ".mdx", ".rst", ".txt",
+  // Data / config
+  ".yaml", ".yml", ".json", ".toml", ".ini", ".cfg",
+  // Shell scripts
+  ".sh", ".bash", ".zsh", ".fish",
+  // Web
+  ".html", ".htm", ".css", ".scss", ".sass", ".less",
+  // Query / schema
+  ".sql", ".graphql", ".gql", ".proto",
+  // Markup / data interchange
+  ".xml", ".svg",
+  // Containers / infra
+  ".dockerfile",
 ]);
 
 // Index files that mark explicit modules
@@ -94,8 +113,8 @@ export async function scanModules(
     console.log(`[scanner] source roots: ${sourceRoots.join(", ") || "(project root)"}`);
   }
 
-  // Collect all tracked source files using git ls-files (respects .gitignore)
-  const allFiles = await listTrackedSourceFiles(projectPath);
+  // Collect all tracked files (source + content) for module discovery
+  const allFiles = await listAllTrackedFiles(projectPath);
 
   if (debug) {
     console.log(`[scanner] tracked source files: ${allFiles.length}`);
@@ -140,6 +159,36 @@ export async function scanModules(
       test_files: [],
     });
   }
+
+  // ── Step 2b: Create intermediate modules for hierarchy gaps ──────────
+  // If modules like "templates/agents" and "templates/hooks/claude" exist
+  // but "templates" or "templates/hooks" don't, create them as empty parent
+  // modules so the serializer can build a proper tree.
+  const existingIds = new Set(modules.map((m) => m.id));
+  const intermediates: Module[] = [];
+
+  for (const moduleId of existingIds) {
+    const segments = moduleId.split("/");
+    for (let i = 1; i < segments.length; i++) {
+      const ancestorId = segments.slice(0, i).join("/");
+      if (!existingIds.has(ancestorId)) {
+        existingIds.add(ancestorId);
+        const ancestorPath = sourceRoots.length > 0
+          ? sourceRoots[0] + "/" + ancestorId
+          : ancestorId;
+        intermediates.push({
+          id: ancestorId,
+          path: ancestorPath,
+          type: classifyModuleType(ancestorId, [], sourceRoots),
+          files: [],
+          imports: { internal: [], external: [] },
+          imported_by: [],
+          test_files: [],
+        });
+      }
+    }
+  }
+  modules.push(...intermediates);
 
   // ── Step 3: Associate test files with source modules ─────────────────
   // Convention-based: match test files to source modules using directory
@@ -276,16 +325,34 @@ export async function detectSourceRoots(projectPath: string): Promise<string[]> 
 }
 
 /**
- * List all tracked source files using `git ls-files`.
+ * List all tracked files (source + content) for module discovery.
  *
- * This respects .gitignore automatically. Falls back to a manual
- * filesystem walk if git is not available.
+ * Includes both programming language files and content files (.md, .yaml,
+ * .sh, etc.) so that directories containing non-code files are visible
+ * as modules in the codegraph.
+ *
+ * Excludes dotfolder paths (.github/, .engraph/, .agents/, etc.) — these
+ * are infrastructure/metadata, not project source.
  */
-export async function listTrackedSourceFiles(
+export async function listAllTrackedFiles(
   projectPath: string
 ): Promise<string[]> {
-  let rawFiles: string[];
+  const rawFiles = await listRawTrackedFiles(projectPath);
 
+  return rawFiles.filter((f) => {
+    // Exclude files under top-level dotfolders
+    if (f.startsWith(".")) return false;
+
+    const ext = path.extname(f).toLowerCase();
+    return SOURCE_EXTENSIONS.has(ext) || CONTENT_EXTENSIONS.has(ext);
+  });
+}
+
+/**
+ * Get the raw list of tracked files from git (or filesystem fallback).
+ * No extension filtering — callers apply their own filter.
+ */
+async function listRawTrackedFiles(projectPath: string): Promise<string[]> {
   try {
     // Use git ls-files for .gitignore-aware file listing.
     // --cached: tracked files; --others --exclude-standard: untracked but not ignored
@@ -298,17 +365,11 @@ export async function listTrackedSourceFiles(
         maxBuffer: 50 * 1024 * 1024,
       }
     ).trim();
-    rawFiles = output ? output.split("\n") : [];
+    return output ? output.split("\n") : [];
   } catch {
     // Not a git repo or git not available — fallback to manual walk
-    rawFiles = await walkDirectory(projectPath, projectPath);
+    return walkDirectory(projectPath, projectPath);
   }
-
-  // Filter to source files only
-  return rawFiles.filter((f) => {
-    const ext = path.extname(f).toLowerCase();
-    return SOURCE_EXTENSIONS.has(ext);
-  });
 }
 
 /**
