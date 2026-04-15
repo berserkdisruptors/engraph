@@ -26,6 +26,7 @@ import type {
 } from "./types.js";
 import { getExtractor } from "./languages/registry.js";
 import type { LanguageExtractor, RawImport } from "./languages/types.js";
+import type { FileImportMap } from "./consistency.js";
 
 // ─── WASM Parser Management ───────────────────────────────────────────────
 
@@ -65,13 +66,14 @@ export interface AnalyzeImportsOptions {
  * Analyze imports/exports across all modules using tree-sitter WASM.
  *
  * Mutates `modules` in-place (populates file exports, module imports, imported_by).
+ * Returns a FileImportMap for consistency report computation (per-file import data).
  */
 export async function analyzeImports(
   projectPath: string,
   modules: Module[],
   sourceRoots: string[],
   options: AnalyzeImportsOptions = {}
-): Promise<void> {
+): Promise<FileImportMap> {
   const { debug = false } = options;
 
   // Build a set of all file paths for import resolution
@@ -139,6 +141,9 @@ export async function analyzeImports(
   const moduleInternalImports = new Map<string, Map<string, InternalImportAcc>>();
   const moduleExternalImports = new Map<string, Map<string, ExternalImportAcc>>();
 
+  // Side-channel: per-file import identifiers for consistency report computation
+  const fileImportMap: FileImportMap = new Map();
+
   for (const mod of modules) {
     moduleInternalImports.set(mod.id, new Map());
     moduleExternalImports.set(mod.id, new Map());
@@ -152,6 +157,20 @@ export async function analyzeImports(
       if (!tree) continue;
 
       const rawImports = extractor.extractImports(tree, file.path);
+
+      // Collect per-file imported identifiers for consistency reports
+      const fileIdentifiers: string[] = [];
+      for (const raw of rawImports) {
+        for (const sym of raw.symbols) {
+          fileIdentifiers.push(sym.name);
+        }
+      }
+      if (fileIdentifiers.length > 0) {
+        if (!fileImportMap.has(mod.id)) {
+          fileImportMap.set(mod.id, new Map());
+        }
+        fileImportMap.get(mod.id)!.set(file.path, fileIdentifiers);
+      }
 
       for (const raw of rawImports) {
         processRawImport(
@@ -240,6 +259,7 @@ export async function analyzeImports(
     console.log(`[analyzer] pass 3: reverse index built`);
   }
 
+  return fileImportMap;
 }
 
 // ─── Internal Helpers ──────────────────────────────────────────────────────
