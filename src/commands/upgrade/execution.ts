@@ -9,7 +9,6 @@ import { saveEngraphConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
-import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { ensureEngraphInstructionFiles } from "../../utils/agent-instructions.js";
 import { ensureGitignoreEntries } from "../../utils/index.js";
 import { generateCodegraph } from "../graph/index.js";
@@ -55,7 +54,6 @@ export async function executeUpgrade(
     ["extract", isMultiAgent ? "Extract to temporary locations" : "Extract to temporary location"],
     ["backup", "Backup current files"],
     ["replace-skills", "Replace skills"],
-    ["merge-settings", "Merge agent settings"],
     ["migrate-context", "Migrate context structure"],
     ["codegraph", "Regenerate codegraph"],
     ["update-config", "Update engraph.json"],
@@ -243,17 +241,6 @@ export async function executeUpgrade(
           }
         }
 
-        // Check if source has hooks (e.g., .claude/hooks for Claude Code)
-        const hooksSrcPath = path.join(sourceDir, agentFolder, "hooks");
-        const hooksPath = path.join(projectPath, agentFolder, "hooks");
-        if (await fs.pathExists(hooksSrcPath)) {
-          if (await fs.pathExists(hooksPath)) {
-            console.log(chalk.gray(`  would update ${agentFolder}/hooks/`));
-          } else {
-            console.log(chalk.gray(`  would create ${agentFolder}/hooks/`));
-          }
-          console.log(chalk.gray(`  would merge hooks config into ${agentFolder}settings.local.json`));
-        }
       }
 
       // Check skills for all agents
@@ -273,7 +260,6 @@ export async function executeUpgrade(
         tracker.skip("replace-skills", "no skills in release");
       }
 
-      tracker.skip("merge-settings", "dry-run mode");
       tracker.skip("migrate-context", "dry-run mode");
       tracker.skip("update-config", "dry-run mode");
       tracker.skip("cleanup", "dry-run mode");
@@ -321,21 +307,6 @@ export async function executeUpgrade(
           await fs.copy(skillsSrc, skillsDest);
         }
 
-        // Replace hooks (e.g., .claude/hooks/ for Claude Code)
-        const hooksSrc = path.join(sourceDir, agentFolder, "hooks");
-        const hooksDest = path.join(projectPath, agentFolder, "hooks");
-
-        if (await fs.pathExists(hooksSrc)) {
-          // Backup hooks if they exist
-          if (await fs.pathExists(hooksDest)) {
-            await fs.copy(hooksDest, path.join(backupDir, agent, "hooks"));
-          }
-
-          // Replace hooks
-          await fs.ensureDir(path.dirname(hooksDest));
-          await fs.remove(hooksDest);
-          await fs.copy(hooksSrc, hooksDest);
-        }
       }
 
       // Use first agent's source for shared resources
@@ -381,32 +352,6 @@ export async function executeUpgrade(
         tracker.complete("replace-skills", `${totalSkillsReplaced} skill(s)`);
       } else {
         tracker.skip("replace-skills", "no skills in release");
-      }
-
-      // Merge agent settings for all successful agents
-      tracker.start("merge-settings");
-      let totalHooksAdded = 0;
-      let anyMerged = false;
-
-      for (const agent of successfulAgents) {
-        const agentFolder = AGENT_FOLDER_MAP[agent];
-        const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
-          debug,
-        });
-
-        if (mergeResult.merged) {
-          anyMerged = true;
-          totalHooksAdded += mergeResult.hooksAdded || 0;
-        }
-      }
-
-      if (anyMerged) {
-        const detail = totalHooksAdded
-          ? `${totalHooksAdded} hook(s)`
-          : "merged";
-        tracker.complete("merge-settings", detail);
-      } else {
-        tracker.skip("merge-settings", "no agents required settings merge");
       }
 
       // Migrate context structure using MigrationRunner
@@ -523,16 +468,7 @@ export async function executeUpgrade(
             await fs.copy(skillsBackup, skillsDest);
           }
 
-          const hooksBackup = path.join(backupDir, agent, "hooks");
-          if (await fs.pathExists(hooksBackup)) {
-            const hooksDest = path.join(projectPath, agentFolder, "hooks");
-            await fs.remove(hooksDest);
-            await fs.copy(hooksBackup, hooksDest);
-          }
         }
-
-        // Skills are now backed up per-agent inside the agent backup dir
-        // (handled by the per-agent skills restore above)
 
         console.log(MINT_COLOR("\nRollback: Restored previous files from backup"));
       } catch (rollbackError: any) {

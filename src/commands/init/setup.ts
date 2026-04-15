@@ -10,9 +10,7 @@ import {
   ensureGitignoreEntries,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
-import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
-import { AGENT_FOLDER_MAP } from "../../constants.js";
 import { ensureEngraphInstructionFiles } from "../../utils/agent-instructions.js";
 import { generateCodegraph } from "../graph/index.js";
 
@@ -50,7 +48,6 @@ export async function setupProject(
         ["extract", "Extract templates"],
         ["chmod", "Ensure scripts executable"],
         ["config", "Create configuration file"],
-        ["merge-settings", "Merge agent settings"],
         ["codegraph", "Generate codegraph"],
         ["git", "Initialize git repository"],
         ["final", "Finalize"],
@@ -63,7 +60,6 @@ export async function setupProject(
         ["extracted-summary", "Extraction summary"],
         ["chmod", "Ensure scripts executable"],
         ["config", "Create configuration file"],
-        ["merge-settings", "Merge agent settings"],
         ["codegraph", "Generate codegraph"],
         ["cleanup", "Cleanup"],
         ["git", "Initialize git repository"],
@@ -224,32 +220,6 @@ export async function setupProject(
 
     // Ensure engraph generated files are in .gitignore
     ensureGitignoreEntries(projectPath, { debug });
-
-    // Merge agent settings for all successful agents
-    tracker.start("merge-settings");
-    let totalHooksAdded = 0;
-    let anyMerged = false;
-
-    for (const agent of successfulAgents) {
-      const agentFolder = AGENT_FOLDER_MAP[agent];
-      const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
-        debug,
-      });
-
-      if (mergeResult.merged) {
-        anyMerged = true;
-        totalHooksAdded += mergeResult.hooksAdded || 0;
-      }
-    }
-
-    if (anyMerged) {
-      const detail = totalHooksAdded
-        ? `${totalHooksAdded} hook(s) added`
-        : "settings created";
-      tracker.complete("merge-settings", detail);
-    } else {
-      tracker.skip("merge-settings", "no agents required settings merge");
-    }
 
     // Generate codegraph — deterministic structural scan of the codebase
     tracker.start("codegraph");
