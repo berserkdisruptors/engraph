@@ -1,0 +1,33 @@
+id: constant-naming-dual-convention
+name: "Constant Naming: Dual Convention by Module Scope"
+type: convention
+sub_type: naming-convention
+enforcement: recommended
+applies_to_modules:
+  - "root"
+  - "config"
+  - "commands/graph/languages"
+provenance: detected
+created: "2026-04-15"
+last_updated: "2026-04-15"
+
+description: |
+  Constants follow two distinct naming conventions depending on their scope:
+
+  Project-wide configuration and shared constants use SCREAMING_SNAKE_CASE.
+  The root module (src/constants.ts) and config module use this for all 9 of
+  their constants: GREEN_COLOR, REPO_OWNER, AGENT_FOLDER_MAP, AI_CHOICES,
+  CLAUDE_LOCAL_PATH, INQUIRER_THEME, MINT_COLOR, REPO_NAME, TAGLINE.
+
+  Module-internal constants use camelCase. The commands/graph/languages module
+  uses this for all 14 of its constants — language extractor registrations
+  like typescriptExtractor, pythonExtractor, goExtractor.
+
+  The rule: if the constant is exported from root/config for project-wide use,
+  use SCREAMING_SNAKE_CASE. If it's a module-internal registration or lookup
+  table, use camelCase.
+
+reference_files:
+  - "src/constants.ts"
+  - "src/config/agents.ts"
+  - "src/commands/graph/languages/registry.ts"
