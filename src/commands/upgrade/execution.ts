@@ -398,7 +398,7 @@ export async function executeUpgrade(
       // Regenerate codegraph — deterministic structural scan of the codebase
       tracker.start("codegraph");
       try {
-        const codegraph = await generateCodegraph(projectPath, { debug });
+        const { codegraph } = await generateCodegraph(projectPath, { debug });
         tracker.complete(
           "codegraph",
           `${codegraph.modules.length} modules`
