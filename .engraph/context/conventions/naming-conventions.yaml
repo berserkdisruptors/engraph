@@ -51,20 +51,6 @@ file_naming:
       - "context-search/SKILL.md"
     location: "src/templates/skills/"
 
-  agent_templates:
-    pattern: "buildforce-{domain}-{role}.md"
-    examples:
-      - "buildforce-structural-explorer.md"
-      - "buildforce-conventions-extractor.md"
-      - "buildforce-explorer.md"
-    location: "src/templates/agents/"
-
-  hook_scripts:
-    pattern: "descriptive-kebab-case.{sh,ts}"
-    examples:
-      - "setup-explorer-subagent.sh"
-      - "setup-explorer-subagent.ts"
-    location: "src/templates/hooks/{claude,cursor,opencode}/"
 
 folder_naming:
   context_domains:
@@ -137,12 +123,6 @@ edge_cases:
       - "authentication-oauth.yaml (OAuth extension)"
     rationale: "Avoid monolithic files; suffix indicates specific aspect"
 
-  - case: "Agent-specific files"
-    rule: "Use agent name in folder, not filename"
-    examples:
-      - ".claude/hooks/setup-explorer-subagent.sh"
-      - ".cursor/hooks/setup-explorer-subagent.sh"
-    rationale: "Same functionality, same filename, different agent folders"
 
 enforcement_mechanism:
   context_files: "Enforced by template instructions in extract skill"
@@ -166,4 +146,4 @@ template: |
 reference_files:
   - "tsconfig.json (forceConsistentCasingInFileNames)"
   - "src/templates/skills/context-extract/SKILL.md (context file naming rules)"
-  - "src/templates/agents/buildforce-explorer.md (agent naming pattern)"
+  - "src/templates/skills/ (skill naming pattern)"

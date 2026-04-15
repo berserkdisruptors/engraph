@@ -1,0 +1,32 @@
+id: barrel-reexports-command-modules
+name: "Barrel Re-exports in Command Modules"
+type: convention
+sub_type: code-convention
+enforcement: recommended
+applies_to_modules:
+  - "commands/*"
+provenance: detected
+created: "2026-04-15"
+last_updated: "2026-04-15"
+
+description: |
+  Command sub-modules expose their public API through a barrel index.ts file
+  that re-exports the module's key symbols. This pattern holds for all 7
+  command sub-modules: commands/graph, commands/init, commands/lookup,
+  commands/recall, commands/search, commands/upgrade, and
+  commands/upgrade/migrations.
+
+  Utility and internal modules (utils, lib, config, validation) do NOT use
+  barrel files — they are imported directly by file path.
+
+  This creates a two-tier structure:
+  - Barrel file present = "this is the module's public API"
+  - No barrel file = "import what you need by path"
+
+  When adding a new command module, create an index.ts barrel file.
+  When adding a new utility module, do not add an index.ts.
+
+reference_files:
+  - "src/commands/graph/index.ts"
+  - "src/commands/init/index.ts"
+  - "src/commands/lookup/index.ts"

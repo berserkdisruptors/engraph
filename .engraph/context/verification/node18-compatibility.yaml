@@ -1,0 +1,29 @@
+id: node18-compatibility
+name: "Node 18 Compatibility Required"
+type: verification
+triggered_by_modules:
+  - "*"
+provenance: detected
+created: "2026-04-15"
+last_updated: "2026-04-15"
+
+quality_standards:
+  - standard: "No Node.js APIs newer than Node 18"
+    description: |
+      The CI test matrix runs on Node.js 18, 20, and 22. Node 18 is the
+      minimum supported version (package.json engines.node >= 18.0.0).
+
+      Code that uses APIs introduced after Node 18 will pass locally on a
+      newer Node but fail in CI on the Node 18 run. Common pitfalls:
+        - Array.findLast() / Array.findLastIndex() — Node 22+
+        - response.bytes() — Node 20.11+
+        - fs.glob() — Node 22+
+        - structuredClone() — available from Node 17, safe to use
+
+      Before using a Node built-in API, verify it exists in Node 18.
+    enforcement: strict
+
+known_risks:
+  - module: "src/**/*.ts"
+    risk: "Using Node.js APIs not available in Node 18"
+    mitigation: "Check MDN or Node.js docs for the minimum version where the API was introduced"

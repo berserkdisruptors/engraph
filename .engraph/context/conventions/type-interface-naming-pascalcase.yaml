@@ -1,0 +1,28 @@
+id: type-interface-naming-pascalcase
+name: "Type and Interface Naming: PascalCase"
+type: convention
+sub_type: naming-convention
+enforcement: recommended
+applies_to_modules:
+  - "*"
+provenance: detected
+created: "2026-04-15"
+last_updated: "2026-04-15"
+
+description: |
+  All type aliases and interface declarations use PascalCase naming with
+  zero exceptions. 59 out of 59 declarations across 10 modules follow
+  this pattern — Codegraph, Module, ExportedSymbol, ProjectProfile,
+  ConsistencyReport, FileImportMap, etc.
+
+  The codegraph module (commands/graph) alone accounts for 30 type/interface
+  declarations, all PascalCase. Every other module that defines types
+  follows the same convention.
+
+  An agent creating new types must use PascalCase. Types like importedSymbol
+  or file_entry would break the pattern.
+
+reference_files:
+  - "src/commands/graph/types.ts"
+  - "src/commands/graph/consistency.ts"
+  - "src/types.ts"
