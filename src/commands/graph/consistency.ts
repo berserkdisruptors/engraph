@@ -55,17 +55,6 @@ export interface ModuleInterfacePattern {
   commonImports: string[];
 }
 
-export interface HubModule {
-  moduleId: string;
-  inboundCount: number;
-}
-
-export interface DependencyDirection {
-  leafModules: string[];
-  hubModules: HubModule[];
-  circularDependencies: string[][];
-}
-
 export interface DetectedTool {
   name: string;
   configFile: string;
@@ -78,7 +67,6 @@ export interface LinterFormatterConfig {
 export interface ConsistencyReport {
   namingPatterns: NamingPattern[];
   moduleInterfaces: ModuleInterfacePattern[];
-  dependencyDirection: DependencyDirection;
   linterFormatterConfig: LinterFormatterConfig;
 }
 
@@ -329,106 +317,7 @@ export function computeModuleInterfacePatterns(
   return results.sort((a, b) => a.moduleId.localeCompare(b.moduleId));
 }
 
-// ─── 3. Dependency Direction Analysis ─────────────────────────────────────
-
-export function computeDependencyDirection(
-  modules: Module[]
-): DependencyDirection {
-  // Leaf modules: imported by others but have zero outbound cross-module deps
-  const leafModules: string[] = [];
-  for (const mod of modules) {
-    if (
-      mod.imports.internal.length === 0 &&
-      mod.imported_by.length > 0
-    ) {
-      leafModules.push(mod.id);
-    }
-  }
-  leafModules.sort();
-
-  // Hub modules: sorted by inbound count descending, threshold >= 3
-  const hubModules: HubModule[] = modules
-    .filter((mod) => mod.imported_by.length >= 3)
-    .map((mod) => ({
-      moduleId: mod.id,
-      inboundCount: mod.imported_by.length,
-    }))
-    .sort((a, b) => b.inboundCount - a.inboundCount);
-
-  // Circular dependencies: Tarjan's SCC
-  const circularDependencies = detectCycles(modules);
-
-  return { leafModules, hubModules, circularDependencies };
-}
-
-/**
- * Detect cycles using Tarjan's strongly connected components algorithm.
- * Returns arrays of module ID chains representing cycles (SCCs of size > 1).
- */
-function detectCycles(modules: Module[]): string[][] {
-  const moduleIds = new Set(modules.map((m) => m.id));
-
-  // Build adjacency list
-  const adj = new Map<string, string[]>();
-  for (const mod of modules) {
-    adj.set(
-      mod.id,
-      mod.imports.internal
-        .map((imp) => imp.module_id)
-        .filter((id) => moduleIds.has(id))
-    );
-  }
-
-  // Tarjan's algorithm
-  let index = 0;
-  const stack: string[] = [];
-  const onStack = new Set<string>();
-  const indices = new Map<string, number>();
-  const lowlinks = new Map<string, number>();
-  const sccs: string[][] = [];
-
-  function strongconnect(v: string): void {
-    indices.set(v, index);
-    lowlinks.set(v, index);
-    index++;
-    stack.push(v);
-    onStack.add(v);
-
-    for (const w of adj.get(v) ?? []) {
-      if (!indices.has(w)) {
-        strongconnect(w);
-        lowlinks.set(v, Math.min(lowlinks.get(v)!, lowlinks.get(w)!));
-      } else if (onStack.has(w)) {
-        lowlinks.set(v, Math.min(lowlinks.get(v)!, indices.get(w)!));
-      }
-    }
-
-    if (lowlinks.get(v) === indices.get(v)) {
-      const scc: string[] = [];
-      let w: string;
-      do {
-        w = stack.pop()!;
-        onStack.delete(w);
-        scc.push(w);
-      } while (w !== v);
-
-      // Only report SCCs of size > 1 (actual cycles)
-      if (scc.length > 1) {
-        sccs.push(scc.sort());
-      }
-    }
-  }
-
-  for (const mod of modules) {
-    if (!indices.has(mod.id)) {
-      strongconnect(mod.id);
-    }
-  }
-
-  return sccs.sort((a, b) => a[0].localeCompare(b[0]));
-}
-
-// ─── 4. Linter/Formatter Config Detection ─────────────────────────────────
+// ─── 3. Linter/Formatter Config Detection ─────────────────────────────────
 
 interface ToolDetectionEntry {
   name: string;
@@ -554,7 +443,6 @@ export async function computeConsistencyReport(
 ): Promise<ConsistencyReport> {
   const namingPatterns = computeNamingPatterns(modules);
   const moduleInterfaces = computeModuleInterfacePatterns(modules, fileImportMap);
-  const dependencyDirection = computeDependencyDirection(modules);
   const linterFormatterConfig = await computeLinterFormatterConfig(
     projectPath,
     profile
@@ -563,7 +451,6 @@ export async function computeConsistencyReport(
   return {
     namingPatterns,
     moduleInterfaces,
-    dependencyDirection,
     linterFormatterConfig,
   };
 }

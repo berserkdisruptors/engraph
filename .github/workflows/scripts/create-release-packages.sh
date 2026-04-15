@@ -28,48 +28,6 @@ GENRELEASES_DIR=".genreleases"
 mkdir -p "$GENRELEASES_DIR"
 rm -rf "$GENRELEASES_DIR"/* || true
 
-generate_agents() {
-  local agent=$1 output_dir=$2
-  mkdir -p "$output_dir"
-  for template in src/templates/agents/*.md; do
-    [[ -f "$template" ]] || continue
-    local name agents_field
-    name=$(basename "$template" .md)
-
-    # Normalize line endings
-    file_content=$(tr -d '\r' < "$template")
-
-    # Check for agent-specific filtering (same as commands)
-    # If 'agents:' field exists in frontmatter, only include if current agent is in the list
-    agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
-    if [[ -n "$agents_field" ]]; then
-      # Use word boundary matching for reliable agent name detection
-      if ! echo "$agents_field" | grep -qw "$agent"; then
-        echo "  [filter] Skipping agent $name for $agent (agents: $agents_field)"
-        continue
-      else
-        echo "  [filter] Including agent $name for $agent (agents: $agents_field)"
-      fi
-    fi
-
-    # Remove the agents: field from frontmatter before copying
-    local body
-    body=$(printf '%s\n' "$file_content" | awk '
-      /^---$/ { print; if (++dash_count == 1) in_frontmatter=1; else in_frontmatter=0; next }
-      in_frontmatter && /^agents:/ { next }
-      { print }
-    ')
-
-    echo "$body" > "$output_dir/$name.md"
-  done
-}
-
-normalize_agents() {
-  local agent=$1 output_dir=$2
-  echo "  Normalizing agent templates for $agent..."
-  npx tsx src/scripts/normalize-agent-templates.ts "$agent" "$output_dir"
-}
-
 generate_skills() {
   local agent=$1 output_dir=$2
   mkdir -p "$output_dir"
@@ -126,38 +84,18 @@ build_package() {
   fi
   case $agent in
     claude)
-      # Claude Code sub-agents
-      if [[ -d src/templates/agents ]]; then
-        mkdir -p "$base_dir/.claude/agents"
-        generate_agents claude "$base_dir/.claude/agents"
-      fi
-      # Claude Code skills
       if [[ -d src/templates/skills ]]; then
         mkdir -p "$base_dir/.claude/skills"
         generate_skills claude "$base_dir/.claude/skills"
       fi
       ;;
     cursor)
-      # Cursor sub-agents
-      if [[ -d src/templates/agents ]]; then
-        mkdir -p "$base_dir/.cursor/agents"
-        generate_agents cursor "$base_dir/.cursor/agents"
-        normalize_agents cursor "$base_dir/.cursor/agents"
-      fi
-      # Cursor skills
       if [[ -d src/templates/skills ]]; then
         mkdir -p "$base_dir/.cursor/skills"
         generate_skills cursor "$base_dir/.cursor/skills"
       fi
       ;;
     opencode)
-      # OpenCode sub-agents
-      if [[ -d src/templates/agents ]]; then
-        mkdir -p "$base_dir/.opencode/agents"
-        generate_agents opencode "$base_dir/.opencode/agents"
-        normalize_agents opencode "$base_dir/.opencode/agents"
-      fi
-      # OpenCode skills
       if [[ -d src/templates/skills ]]; then
         mkdir -p "$base_dir/.opencode/skills"
         generate_skills opencode "$base_dir/.opencode/skills"
