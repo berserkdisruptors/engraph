@@ -1,0 +1,28 @@
+id: branch-naming-convention
+name: "Branch Naming Must Follow Conventional Prefix Pattern"
+type: verification
+triggered_by_modules:
+  - "*"
+provenance: detected
+created: "2026-04-15"
+last_updated: "2026-04-15"
+
+quality_standards:
+  - standard: "Branch name follows {type}/{description} pattern"
+    description: |
+      Every pull request branch must be named {type}/{description} where type
+      is one of: feat, fix, chore, docs, refactor, perf, test, ci, build,
+      revert, or hotfix. The regex enforced by CI is:
+      ^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$
+
+      Examples:
+        feat/context-extract-rewrite (correct)
+        fix/naming-pattern-edge-case (correct)
+        update-context-extract (FAILS CI)
+        new-feature (FAILS CI)
+    enforcement: strict
+
+review_checklist:
+  - item: "Branch name matches conventional prefix pattern"
+    frequency: 1.0
+    example_comment: "Branch name must start with feat/, fix/, chore/, etc."

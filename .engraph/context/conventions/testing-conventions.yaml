@@ -62,7 +62,6 @@ reference_files:
   - "tests/helpers/temp-dir.ts"
   - "tests/helpers/fixtures.ts"
   - "tests/helpers/yaml-builders.ts"
-  - "tests/unit/utils/settings-merge.test.ts"
   - "tests/integration/migrations/runner-full.test.ts"
   - "tests/e2e/init.test.ts"
 

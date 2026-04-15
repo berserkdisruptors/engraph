@@ -7,12 +7,20 @@ import { analyzeImports } from "./analyzer.js";
 import { detectProjectProfile } from "./profiler.js";
 import { writeCodegraph } from "./serializer.js";
 import { regenerateContextIndex } from "./context-index.js";
+import { computeConsistencyReport } from "./consistency.js";
+import type { ConsistencyReport } from "./consistency.js";
 
 
 const GENERATOR_VERSION = "1.0.0";
 
 export interface GenerateCodegraphOptions {
   debug?: boolean;
+  consistencyReport?: boolean;
+}
+
+export interface GenerateCodegraphResult {
+  codegraph: Codegraph;
+  consistencyReport?: ConsistencyReport;
 }
 
 /**
@@ -25,8 +33,8 @@ export interface GenerateCodegraphOptions {
 export async function generateCodegraph(
   projectPath: string,
   options: GenerateCodegraphOptions = {}
-): Promise<Codegraph> {
-  const { debug = false } = options;
+): Promise<GenerateCodegraphResult> {
+  const { debug = false, consistencyReport: wantReport = false } = options;
 
   // Resolve the commit SHA from git (if available)
   const commitSha = await resolveCommitSha(projectPath);
@@ -45,7 +53,7 @@ export async function generateCodegraph(
 
   // WP4 — Layer 3: Import analysis via tree-sitter WASM
   const sourceRoots = await detectSourceRoots(projectPath);
-  await analyzeImports(projectPath, modules, sourceRoots, { debug });
+  const fileImportMap = await analyzeImports(projectPath, modules, sourceRoots, { debug });
 
   const codegraph: Codegraph = {
     generated_at: new Date().toISOString(),
@@ -70,7 +78,22 @@ export async function generateCodegraph(
 
   await regenerateContextIndex(projectPath, codegraphHash, { debug });
 
-  return codegraph;
+  // Compute consistency report if requested
+  let report: ConsistencyReport | undefined;
+  if (wantReport) {
+    report = await computeConsistencyReport(
+      projectPath,
+      codegraph.modules,
+      codegraph.project,
+      fileImportMap
+    );
+
+    if (debug) {
+      console.log(`[codegraph] consistency report computed`);
+    }
+  }
+
+  return { codegraph, consistencyReport: report };
 }
 
 /**

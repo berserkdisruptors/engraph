@@ -34,7 +34,20 @@ Run `git diff --cached --stat`.
 - **If staged changes exist:** these are the commit scope. Do not consider unstaged or untracked files — the user has already expressed what belongs in this commit by staging it.
 - **If nothing is staged:** consider all unstaged modifications and untracked files as candidates. Use session context and the diff to decide what to stage and commit.
 
-### 2. Resolve Scopes from Codegraph
+### 2. Check Branch History for Existing Context
+
+Run `git log --format="%B" HEAD~10..HEAD` (or since the branch diverged from main) to read action lines already captured in prior commits on this branch.
+
+**Do not repeat reasoning that is already persisted.** Plan commits (`docs(plan): ...`) and earlier implementation commits may already capture intent, decisions, rejected alternatives, and constraints. Your commit should only carry:
+- **New reasoning** that emerged during this specific implementation work
+- **Refinements** to prior decisions (e.g., a decision changed during implementation)
+- **Implementation-specific learnings** discovered while writing the code
+
+If a decision was already stated in a plan commit and the implementation followed it without change, do not restate it. The git history is a timeline — each commit adds new signal, not a restated summary.
+
+**Prefer an empty body over fabricated context.** A clean conventional commit subject with no action lines is a valid contextual commit. Not every commit produces new reasoning worth capturing. If checking the branch history and session context yields no new signal, write the subject line only. The goal is signal density, not action line count.
+
+### 3. Resolve Scopes from Codegraph
 
 Read `.engraph/codegraph/index.yaml` and map each changed file to its module ID. If a module has a `sub_graph` field, follow that reference for deeper resolution.
 
@@ -48,13 +61,13 @@ Examples:
 
 **If no codegraph exists** (project hasn't run `engraph init`), fall back to human-readable concept labels.
 
-### 3. Determine Subject Line Scope
+### 4. Determine Subject Line Scope
 
 - Use the alias (or module ID if no alias) of the primary changed module
 - If the commit touches multiple modules, use their lowest common ancestor
 - **If scope resolves to `root`:** omit the scope from the subject line entirely. Write `type: subject` not `type(root): subject`. Keep `root` in body action lines where it's useful for filtering.
 
-### 4. Validate Scopes
+### 5. Validate Scopes
 
 Every `scope()` in action lines must reference a valid alias or module ID from the codegraph. Before writing the commit:
 - Collect all scopes you plan to use
@@ -192,3 +205,5 @@ What you CANNOT infer — do not fabricate:
 9. **Always explain why for `rejected` lines.** A rejection without a reason is useless.
 10. **Don't invent action lines for trivial commits.** A typo fix or dependency bump needs no action lines.
 11. **Don't fabricate context you don't have.** See "When You Lack Conversation Context" above.
+12. **Don't duplicate reasoning from prior commits.** Check branch history first. Each commit adds new signal to the timeline, not a restated summary.
+13. **Prefer an empty body over noise.** A subject-only commit is a valid contextual commit. Not every change produces reasoning worth capturing.

@@ -219,6 +219,7 @@ program
   .command("graph")
   .description("Regenerate the codegraph and context index (.engraph/)")
   .option("--debug", "Show verbose diagnostic output")
+  .option("--consistency-report", "Output consistency report as JSON to stdout")
   .action(async (options) => {
     const projectPath = process.cwd();
     const engraphDir = path.join(projectPath, ".engraph");
@@ -231,12 +232,18 @@ program
       process.exit(1);
     }
 
-    const codegraph = await generateCodegraph(projectPath, {
+    const result = await generateCodegraph(projectPath, {
       debug: options.debug,
+      consistencyReport: options.consistencyReport,
     });
-    console.log(
-      chalk.green(`Codegraph and context index updated: ${codegraph.modules.length} modules`)
-    );
+
+    if (options.consistencyReport && result.consistencyReport) {
+      process.stdout.write(JSON.stringify(result.consistencyReport, null, 2) + "\n");
+    } else {
+      console.log(
+        chalk.green(`Codegraph and context index updated: ${result.codegraph.modules.length} modules`)
+      );
+    }
   });
 
 program
