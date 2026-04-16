@@ -1,13 +1,14 @@
 id: yaml-file-extension-convention
-name: YAML File Extension Convention
+name: "YAML File Extension Convention"
 type: convention
 sub_type: code-convention
 enforcement: strict
 applies_to_modules:
   - "*"
 provenance: manual
-created: 2026-02-02
-last_updated: 2026-02-02
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
 description: |
   All YAML files in the Engraph codebase MUST use the `.yaml` extension exclusively.
   The `.yml` extension is prohibited in source files and generated artifacts.
@@ -40,6 +41,7 @@ description: |
 
   This convention applies ONLY to files with YAML content. Markdown files (.md) are a
   different file type entirely and are not subject to this convention.
+
 examples:
   - file: src/context/conventions/_schema.yaml
     snippet: |

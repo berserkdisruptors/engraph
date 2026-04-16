@@ -1,13 +1,14 @@
 id: skill-creation-conventions
-name: Skill Creation Conventions
+name: "Skill Creation Conventions"
 type: convention
 sub_type: code-convention
 enforcement: strict
 applies_to_modules:
-  - templates/skills/*
+  - "templates/skills/*"
 provenance: manual
-created: 2026-02-19
-last_updated: 2026-02-20
+created: "2026-02-19"
+last_updated: "2026-02-20"
+
 description: |
   Comprehensive conventions for creating Buildforce skills. Skills are Markdown-based
   instruction files that define reusable AI agent capabilities. They live in
@@ -25,6 +26,7 @@ description: |
   Skills that use agent-specific features (like the Task tool for sub-agents) should
   restrict their agents: field accordingly, but the content itself should be written
   as plain Markdown instructions that any AI agent can interpret.
+
 examples:
   - file: src/templates/skills/context-extract/SKILL.md
     snippet: |

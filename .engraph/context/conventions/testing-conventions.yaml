@@ -1,18 +1,20 @@
 id: testing-conventions
-name: Testing Conventions
+name: "Testing Conventions"
 type: convention
 sub_type: testing-standard
 enforcement: strict
 applies_to_modules:
   - "*"
 provenance: manual
-created: 2026-02-20
-last_updated: 2026-02-20
+created: "2026-02-20"
+last_updated: "2026-02-20"
+
 description: |
   Conventions for writing and organizing tests in the Buildforce CLI project.
   The project uses vitest v4 with a three-tier test strategy: unit, integration,
   and e2e. Tests must follow specific patterns for each tier and use shared
   helper utilities for test isolation and fixture creation.
+
 examples:
   - file: tests/unit/utils/config.test.ts
     snippet: |

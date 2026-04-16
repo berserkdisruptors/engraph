@@ -1,13 +1,14 @@
 id: migration-conventions
-name: Migration System Conventions
+name: "Migration System Conventions"
 type: convention
 sub_type: code-convention
 enforcement: strict
 applies_to_modules:
-  - commands/upgrade/migrations
+  - "commands/upgrade/migrations"
 provenance: manual
-created: 2026-02-17
-last_updated: 2026-02-17
+created: "2026-02-17"
+last_updated: "2026-02-17"
+
 description: |
   Conventions for the context migration system that upgrades .engraph/context/ 
   between schema versions. Migrations transform context structure (v1.0 → v2.0 → v2.1)
@@ -18,6 +19,7 @@ description: |
   - Idempotent: Migrations check preconditions (version, folder existence) before acting.
   - Sequential: Migrations run in version order, each updating _index.yaml version field.
   - Self-describing: Each migration has version and description fields.
+
 file_naming:
   pattern: v{major}.{minor}.ts
   location: src/commands/upgrade/migrations/
