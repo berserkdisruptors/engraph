@@ -22,9 +22,9 @@ examples:
       import { getDefaultConfig } from '../../../src/utils/config.js';
 
       describe('getDefaultConfig', () => {
-        it('returns object with framework: buildforce', () => {
+        it('returns object with framework: engraph', () => {
           const config = getDefaultConfig();
-          expect(config).toEqual({ framework: 'buildforce' });
+          expect(config).toEqual({ framework: 'engraph' });
         });
       });
 
@@ -35,7 +35,7 @@ examples:
       let projectDir: string;
       beforeEach(async () => {
         projectDir = createTempDir('bf-config-');
-        await fs.ensureDir(path.join(projectDir, '.buildforce'));
+        await fs.ensureDir(path.join(projectDir, '.engraph'));
       });
       afterEach(() => { cleanupTempDir(projectDir); });
 

@@ -10,7 +10,7 @@ created: "2026-02-13"
 last_updated: "2026-02-13"
 
 description: |
-  Non-workflow skills (those not prefixed with `buildforce.`) follow a `{noun}-{verb}` naming
+  Non-workflow skills (those not prefixed with `engraph.`) follow a `{noun}-{verb}` naming
   pattern using the verb/action form, not the noun/gerund form. This was established by the
   `context-search` skill and applies to all standalone skills.
 
@@ -19,11 +19,11 @@ description: |
     - context-extract (not context-extraction)
     - context-verify (not context-verification)
 
-  Workflow skills that are part of the core buildforce development lifecycle retain the
-  `buildforce.{verb}` prefix (e.g., buildforce.plan, buildforce.build, buildforce.complete).
+  Workflow skills that are part of the core engraph development lifecycle retain the
+  `engraph.{verb}` prefix (e.g., engraph.plan, engraph.build, engraph.complete).
 
 examples:
-  - file: "skill registration"
+  - file: ".claude/skills/"
     snippet: |
       # Correct - verb form
       context-search
@@ -38,4 +38,4 @@ examples:
 violations:
   - "Using noun form instead of verb form (context-extraction instead of context-extract)"
   - "Using gerund form (context-searching instead of context-search)"
-  - "Prefixing non-workflow skills with buildforce- (context-extract instead of context-extract)"
+  - "Prefixing non-workflow skills with engraph- (context-extract instead of context-extract)"

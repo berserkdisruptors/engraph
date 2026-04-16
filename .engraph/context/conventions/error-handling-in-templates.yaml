@@ -20,7 +20,7 @@ reference_files:
   - "src/templates/commands/complete.md"
 
 template: |
-  Run `.buildforce/scripts/bash/get-spec-paths.sh --json` FROM CURRENT WORKING DIRECTORY.
-  **NEVER proceed** if script fails - display error, explain .buildforce directory not found,
-  suggest: 1) check if in buildforce root directory, 2) run `buildforce init .` if needed.
+  Run `.engraph/scripts/bash/get-spec-paths.sh --json` FROM CURRENT WORKING DIRECTORY.
+  **NEVER proceed** if script fails - display error, explain .engraph directory not found,
+  suggest: 1) check if in engraph root directory, 2) run `engraph init .` if needed.
   

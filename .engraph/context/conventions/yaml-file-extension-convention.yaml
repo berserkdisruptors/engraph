@@ -10,7 +10,7 @@ created: "2026-02-02"
 last_updated: "2026-02-02"
 
 description: |
-  All YAML files in the Buildforce CLI codebase MUST use the `.yaml` extension exclusively.
+  All YAML files in the Engraph codebase MUST use the `.yaml` extension exclusively.
   The `.yml` extension is prohibited in source files and generated artifacts.
 
   This convention exists because mixed `.yaml`/`.yml` usage caused file-not-found errors
@@ -25,7 +25,7 @@ description: |
 
   SCOPE:
   - All files in `src/` directory
-  - All files in `.buildforce/` directory
+  - All files in `.engraph/` directory
   - All template files
   - All context repository files
 
@@ -50,7 +50,7 @@ examples:
       name: "{SESSION_NAME}"
       ...
 
-  - file: ".buildforce/context/architecture/cli-architecture.yaml"
+  - file: ".engraph/context/architecture/cli-architecture.yaml"
     snippet: |
       # Context files use .yaml extension
       id: cli-architecture
@@ -68,7 +68,7 @@ examples:
       ...
 
 violations:
-  - "Creating any file with .yml extension in src/ or .buildforce/"
+  - "Creating any file with .yml extension in src/ or .engraph/"
   - "Referencing .yml in documentation or templates (use .yaml)"
   - "Using .yml for new context files"
   - "Using .yml for new session artifacts (spec.yaml, plan.yaml, research.yaml)"
@@ -107,14 +107,14 @@ enforcement_mechanism:
     standardization spec but has not been implemented.
   validation_command: |
     # Check for violations in source directories
-    find src .buildforce -name "*.yml" -not -path "*/node_modules/*" 2>/dev/null
+    find src .engraph -name "*.yml" -not -path "*/node_modules/*" 2>/dev/null
 
 reference_files:
   - "src/templates/spec-template.yaml"
   - "src/templates/plan-template.yaml"
   - "src/templates/research-template.yaml"
-  - ".buildforce/context/_index.yaml"
-  - ".buildforce/context/architecture/_schema.yaml"
+  - ".engraph/context/_index.yaml"
+  - ".engraph/context/architecture/_schema.yaml"
 
 related_context:
   - architecture/yaml-extension-standard.yaml
@@ -126,11 +126,11 @@ migration_guide: |
   3. Verify no broken references with full test of affected commands
 
   Current legacy violations (5 research.yml files in sessions):
-  - .buildforce/sessions/add-examples-command-20251030215737/research.yml
-  - .buildforce/sessions/revert-to-prefix-naming-20251104000000/research.yml
-  - .buildforce/sessions/standardize-cli-title-display-20250130220000/research.yml
-  - .buildforce/sessions/standardize-color-scheme-mint-20251031011544/research.yml
-  - .buildforce/sessions/standardize-lined-boxes-20250131000000/research.yml
+  - .engraph/sessions/add-examples-command-20251030215737/research.yml
+  - .engraph/sessions/revert-to-prefix-naming-20251104000000/research.yml
+  - .engraph/sessions/standardize-cli-title-display-20250130220000/research.yml
+  - .engraph/sessions/standardize-color-scheme-mint-20251031011544/research.yml
+  - .engraph/sessions/standardize-lined-boxes-20250131000000/research.yml
 
   These predate the 2025-11-03 standardization and are retained as historical
   artifacts. New research files must use .yaml extension.

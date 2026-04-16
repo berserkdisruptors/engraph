@@ -10,7 +10,7 @@ created: "2026-02-17"
 last_updated: "2026-02-17"
 
 description: |
-  Conventions for the context migration system that upgrades .buildforce/context/ 
+  Conventions for the context migration system that upgrades .engraph/context/ 
   between schema versions. Migrations transform context structure (v1.0 → v2.0 → v2.1)
   while preserving user data.
 
@@ -139,7 +139,7 @@ forward_only_pattern:
     - Template copying from source ensures fresh schema files
   implementation: |
     // Migrations copy from template, not restore from backup
-    const templatePath = path.join(templateSourceDir, ".buildforce", "context", "_index.yaml");
+    const templatePath = path.join(templateSourceDir, ".engraph", "context", "_index.yaml");
     if (await fs.pathExists(templatePath)) {
       await fs.copy(templatePath, rootIndexPath);
     }
@@ -183,8 +183,8 @@ template: |
   };
 
 reference_files:
-  - "src/commands/upgrade/migrations/index.ts (core types)"
-  - "src/commands/upgrade/migrations/v2.0.ts (canonical example)"
-  - "src/commands/upgrade/migrations/v2.1.ts (incremental migration)"
-  - "src/commands/upgrade/migrations/registry.ts (registration pattern)"
-  - "src/commands/upgrade/migrations/runner.ts (execution logic)"
+  - "src/commands/upgrade/migrations/index.ts"
+  - "src/commands/upgrade/migrations/v2.0.ts"
+  - "src/commands/upgrade/migrations/v2.1.ts"
+  - "src/commands/upgrade/migrations/registry.ts"
+  - "src/commands/upgrade/migrations/runner.ts"
