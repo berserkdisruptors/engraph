@@ -512,5 +512,70 @@ describe("validateCommand (integration)", () => {
         expect(exitCode).toBe(0);
       });
     });
+
+    describe("format preservation", () => {
+      it("--fix on valid project leaves all files byte-identical", async () => {
+        projectDir = await useFixture("valid-project");
+        const convDir = path.join(projectDir, ".engraph", "context", "conventions");
+        const verDir = path.join(projectDir, ".engraph", "context", "verification");
+
+        // Read all files before
+        const filesBefore = new Map<string, string>();
+        for (const dir of [convDir, verDir]) {
+          if (await fs.pathExists(dir)) {
+            for (const entry of await fs.readdir(dir)) {
+              if (entry.startsWith("_") || !entry.endsWith(".yaml")) continue;
+              const p = path.join(dir, entry);
+              filesBefore.set(p, await fs.readFile(p, "utf8"));
+            }
+          }
+        }
+
+        await validateCommand(projectDir, { fix: true });
+
+        // Compare every file byte-for-byte
+        for (const [filePath, before] of filesBefore) {
+          const after = await fs.readFile(filePath, "utf8");
+          expect(after).toBe(before);
+        }
+      });
+
+      it("--fix produces surgical diff — only the broken entry is removed", async () => {
+        projectDir = await useFixture("fix-preserves-formatting");
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "formatting-test.yaml"
+        );
+
+        const before = await fs.readFile(convPath, "utf8");
+        const beforeLines = before.split("\n");
+
+        await validateCommand(projectDir, { fix: true });
+
+        const after = await fs.readFile(convPath, "utf8");
+        const afterLines = after.split("\n");
+
+        // Exactly one line should be removed
+        expect(afterLines.length).toBe(beforeLines.length - 1);
+
+        // The removed line is the broken "payments" entry
+        const removedLine = beforeLines.find(
+          (line, i) => !afterLines.includes(line) || beforeLines.indexOf(line) !== afterLines.indexOf(line)
+        );
+
+        // Reconstruct: inserting the removed line back should yield the original
+        const brokenEntryLine = '  - "payments"';
+        const brokenIdx = beforeLines.indexOf(brokenEntryLine);
+        expect(brokenIdx).toBeGreaterThan(-1);
+
+        // After = Before with that one line spliced out
+        const expected = [...beforeLines];
+        expected.splice(brokenIdx, 1);
+        expect(afterLines).toEqual(expected);
+      });
+    });
   });
 });

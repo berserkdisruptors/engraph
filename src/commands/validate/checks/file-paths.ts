@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
+import { isSeq } from "yaml";
 import type { Finding, ParsedContextFile } from "../types.js";
 
 const GLOB_CHARS = /[*?[]/;
@@ -9,7 +10,6 @@ function isGlobPattern(value: string): boolean {
 }
 
 function isValidGlob(value: string): { valid: boolean; error?: string } {
-  // Check for unmatched brackets
   let inBracket = false;
   for (let i = 0; i < value.length; i++) {
     if (value[i] === "[" && !inBracket) {
@@ -22,6 +22,38 @@ function isValidGlob(value: string): { valid: boolean; error?: string } {
     return { valid: false, error: "Unmatched '[' in glob pattern" };
   }
   return { valid: true };
+}
+
+/**
+ * Remove items at given indices from both the plain object array and the
+ * document AST sequence, preserving formatting in the AST.
+ */
+function removeFromArray(
+  file: ParsedContextFile,
+  fieldPath: (string | number)[],
+  contentArray: unknown[],
+  indices: number[]
+): void {
+  // Update plain object
+  const kept = contentArray.filter((_, i) => !indices.includes(i));
+  // Walk to the parent and set the field
+  let obj: Record<string, unknown> = file.content;
+  for (let i = 0; i < fieldPath.length - 1; i++) {
+    obj = obj[fieldPath[i]] as Record<string, unknown>;
+  }
+  obj[fieldPath[fieldPath.length - 1] as string] = kept;
+
+  // Update document AST
+  if (file.document) {
+    const seq = file.document.getIn(fieldPath, true);
+    if (isSeq(seq)) {
+      for (const idx of [...indices].reverse()) {
+        seq.items.splice(idx, 1);
+      }
+    }
+  }
+
+  file.modified = true;
 }
 
 export async function checkFilePaths(
@@ -70,10 +102,12 @@ export async function checkFilePaths(
         }
       }
       if (fix && brokenIndices.length > 0) {
-        content.reference_files = (content.reference_files as string[]).filter(
-          (_, i) => !brokenIndices.includes(i)
+        removeFromArray(
+          file,
+          ["reference_files"],
+          content.reference_files as unknown[],
+          brokenIndices
         );
-        file.modified = true;
       }
     }
 
@@ -113,10 +147,12 @@ export async function checkFilePaths(
         }
       }
       if (fix && brokenIndices.length > 0) {
-        content.examples = (content.examples as unknown[]).filter(
-          (_, i) => !brokenIndices.includes(i)
+        removeFromArray(
+          file,
+          ["examples"],
+          content.examples as unknown[],
+          brokenIndices
         );
-        file.modified = true;
       }
     }
 
@@ -130,7 +166,6 @@ export async function checkFilePaths(
         const modulePath = risk.module;
 
         if (isGlobPattern(modulePath)) {
-          // Glob: syntax check only — no fix
           const result = isValidGlob(modulePath);
           if (!result.valid) {
             findings.push({
@@ -145,7 +180,6 @@ export async function checkFilePaths(
             });
           }
         } else {
-          // Literal path: filesystem check
           const resolved = path.resolve(projectPath, modulePath);
           if (!(await fs.pathExists(resolved))) {
             if (fix) {
@@ -176,10 +210,12 @@ export async function checkFilePaths(
         }
       }
       if (fix && brokenIndices.length > 0) {
-        content.known_risks = (content.known_risks as unknown[]).filter(
-          (_, i) => !brokenIndices.includes(i)
+        removeFromArray(
+          file,
+          ["known_risks"],
+          content.known_risks as unknown[],
+          brokenIndices
         );
-        file.modified = true;
       }
     }
   }

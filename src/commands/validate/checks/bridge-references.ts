@@ -1,3 +1,4 @@
+import { isSeq } from "yaml";
 import type { AliasMap } from "../../shared/alias-resolver.js";
 import type { Finding, ParsedContextFile } from "../types.js";
 
@@ -10,7 +11,7 @@ function resolves(entry: string, aliasMap: AliasMap): boolean {
  * Check that bridge field entries (applies_to_modules, triggered_by_modules)
  * resolve against the current codegraph.
  *
- * With fix=true, unresolvable entries are removed from the array in place
+ * With fix=true, unresolvable entries are removed from the document AST
  * and ENGRAPH_REFERENCE_REMOVED findings are emitted instead.
  */
 export function checkBridgeReferences(
@@ -30,14 +31,16 @@ export function checkBridgeReferences(
     const modules = content[fieldName];
     if (!Array.isArray(modules)) continue;
 
-    const toRemove: string[] = [];
+    // Collect indices to remove (reverse order for safe splicing)
+    const removeIndices: number[] = [];
 
-    for (const entry of modules) {
+    for (let i = 0; i < modules.length; i++) {
+      const entry = modules[i];
       if (typeof entry !== "string") continue;
 
       if (!resolves(entry, aliasMap)) {
         if (fix) {
-          toRemove.push(entry);
+          removeIndices.push(i);
           findings.push({
             code: "ENGRAPH_REFERENCE_REMOVED",
             severity: "info",
@@ -48,7 +51,6 @@ export function checkBridgeReferences(
               reason: "Reference removed by --fix",
             },
           });
-          file.modified = true;
         } else {
           findings.push({
             code: "ENGRAPH_UNRESOLVABLE_REFERENCE",
@@ -64,10 +66,24 @@ export function checkBridgeReferences(
       }
     }
 
-    if (fix && toRemove.length > 0) {
+    if (fix && removeIndices.length > 0) {
+      // Update plain object for downstream checks (orphan detection)
       content[fieldName] = modules.filter(
-        (m: unknown) => typeof m !== "string" || !toRemove.includes(m)
+        (_, i) => !removeIndices.includes(i)
       );
+
+      // Update document AST for format-preserving write
+      if (file.document) {
+        const seq = file.document.getIn([fieldName], true);
+        if (isSeq(seq)) {
+          // Remove in reverse order to keep indices valid
+          for (const idx of [...removeIndices].reverse()) {
+            seq.items.splice(idx, 1);
+          }
+        }
+      }
+
+      file.modified = true;
     }
   }
 

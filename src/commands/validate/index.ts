@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { parse, stringify } from "yaml";
+import { parseDocument } from "yaml";
 import { buildAliasMap } from "../shared/alias-resolver.js";
 import { checkCodegraphExists } from "./checks/codegraph-exists.js";
 import { checkSchemaValidity } from "./checks/schema-validity.js";
@@ -17,12 +17,6 @@ import type {
 } from "./types.js";
 
 export type { ValidateResult, ValidateOptions };
-
-const YAML_WRITE_OPTIONS = {
-  lineWidth: 120,
-  defaultKeyType: "PLAIN" as const,
-  defaultStringType: "PLAIN" as const,
-};
 
 /**
  * Validate structural integrity of convention and verification files
@@ -54,7 +48,7 @@ export async function validateCommand(
   // Build alias map from codegraph
   const aliasMap = await buildAliasMap(projectPath);
 
-  // Run all checks (fix mode mutates content in place)
+  // Run all checks (fix mode mutates document AST in place)
   const findings: Finding[] = [];
 
   findings.push(...checkSchemaValidity(contextFiles));
@@ -65,7 +59,7 @@ export async function validateCommand(
   // Orphan detection runs after fixes so it sees the post-fix state
   findings.push(...checkOrphanedFiles(contextFiles, aliasMap));
 
-  // Write modified files back to disk
+  // Write modified files back to disk using document.toString() to preserve formatting
   if (fix) {
     await writeModifiedFiles(contextFiles);
   }
@@ -76,9 +70,8 @@ export async function validateCommand(
 
 async function writeModifiedFiles(files: ParsedContextFile[]): Promise<void> {
   for (const file of files) {
-    if (!file.modified) continue;
-    const yamlContent = stringify(file.content, YAML_WRITE_OPTIONS);
-    await fs.writeFile(file.filePath, yamlContent, "utf8");
+    if (!file.modified || !file.document) continue;
+    await fs.writeFile(file.filePath, file.document.toString(), "utf8");
   }
 }
 
@@ -100,12 +93,14 @@ async function loadContextFiles(
       const filePath = path.join(domainDir, entry);
       try {
         const raw = await fs.readFile(filePath, "utf8");
-        const content = parse(raw);
+        const document = parseDocument(raw);
+        const content = document.toJSON();
         if (content && typeof content === "object") {
           files.push({
             filePath,
             relativePath: `${domain}/${entry}`,
             content,
+            document,
           });
         }
       } catch {

@@ -38,5 +38,7 @@ export interface ParsedContextFile {
   filePath: string;
   relativePath: string;
   content: Record<string, unknown>;
+  /** YAML Document AST — used for format-preserving writes in fix mode */
+  document?: import("yaml").Document;
   modified?: boolean;
 }
