@@ -1,0 +1,27 @@
+generated_at: "2026-01-01T00:00:00.000Z"
+generator_version: "1.0.0"
+commit_sha: null
+project:
+  type: cli
+  languages: []
+  frameworks: []
+  package_manager: npm
+  entry_points: []
+  test_framework: vitest
+  scale:
+    total_files: 1
+    source_files: 1
+    test_files: 0
+    total_loc: 10
+    source_loc: 10
+    test_loc: 0
+modules:
+  - id: auth
+    path: src/auth
+    type: feature
+    files: []
+    imports:
+      internal: []
+      external: []
+    imported_by: []
+    test_files: []

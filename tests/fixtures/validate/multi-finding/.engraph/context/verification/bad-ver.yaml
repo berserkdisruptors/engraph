@@ -1,0 +1,9 @@
+id: bad-ver
+name: Verification with Broken Reference
+type: verification
+triggered_by_modules:
+  - "nonexistent"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Verification that is fully orphaned

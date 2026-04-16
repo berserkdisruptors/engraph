@@ -1,0 +1,12 @@
+id: broken-refs
+name: Convention with Multiple Issues
+type: convention
+applies_to_modules:
+  - "auth"
+  - "payments"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Convention with broken bridge ref and broken file path
+reference_files:
+  - "src/nonexistent/file.ts"

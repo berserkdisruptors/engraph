@@ -1,0 +1,12 @@
+id: broken-example
+name: Convention with Broken Example
+type: convention
+applies_to_modules:
+  - "auth"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Convention with non-existent examples file
+examples:
+  - file: "src/nonexistent/example.ts"
+    snippet: "const x = 1;"

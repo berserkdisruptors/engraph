@@ -1,0 +1,10 @@
+id: broken-ver
+name: Broken Verification
+type: verification
+triggered_by_modules:
+  - "nonexistent-module"
+  - "auth"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Verification with one broken and one valid reference

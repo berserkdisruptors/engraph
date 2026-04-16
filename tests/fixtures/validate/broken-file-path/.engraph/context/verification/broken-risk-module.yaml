@@ -1,0 +1,13 @@
+id: broken-risk-module
+name: Verification with Broken Risk Module
+type: verification
+triggered_by_modules:
+  - "auth"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Verification with non-existent known_risks module path
+known_risks:
+  - module: "src/nonexistent/dangerous.ts"
+    risk: Test risk
+    mitigation: Test mitigation
