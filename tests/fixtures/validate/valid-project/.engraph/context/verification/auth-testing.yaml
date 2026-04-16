@@ -1,0 +1,9 @@
+id: auth-testing
+name: Auth Testing
+type: verification
+triggered_by_modules:
+  - "auth/*"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Testing procedures for auth modules

@@ -1,0 +1,13 @@
+id: bad-glob
+name: Verification with Bad Glob
+type: verification
+triggered_by_modules:
+  - "auth"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Verification with invalid glob in known_risks
+known_risks:
+  - module: "src/[unclosed/pattern"
+    risk: Test risk
+    mitigation: Test mitigation

@@ -1,0 +1,48 @@
+generated_at: "2026-01-01T00:00:00.000Z"
+generator_version: "1.0.0"
+commit_sha: null
+project:
+  type: cli
+  languages:
+    - name: typescript
+      percentage: 100
+  frameworks: []
+  package_manager: npm
+  entry_points: []
+  test_framework: vitest
+  scale:
+    total_files: 5
+    source_files: 3
+    test_files: 2
+    total_loc: 100
+    source_loc: 70
+    test_loc: 30
+modules:
+  - id: auth
+    path: src/auth
+    type: feature
+    files: []
+    imports:
+      internal: []
+      external: []
+    imported_by: []
+    test_files: []
+  - id: auth/providers
+    path: src/auth/providers
+    type: feature
+    alias: providers
+    files: []
+    imports:
+      internal: []
+      external: []
+    imported_by: []
+    test_files: []
+  - id: api
+    path: src/api
+    type: feature
+    files: []
+    imports:
+      internal: []
+      external: []
+    imported_by: []
+    test_files: []

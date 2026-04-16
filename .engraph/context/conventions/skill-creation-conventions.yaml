@@ -28,7 +28,7 @@ description: |
   as plain Markdown instructions that any AI agent can interpret.
 
 examples:
-  - file: "src/templates/skills/context-extract/SKILL.md"
+  - file: src/templates/skills/context-extract/SKILL.md
     snippet: |
       ---
       name: context-extract
@@ -58,8 +58,7 @@ examples:
 
       ## Step 0: Route to Mode
       ...
-
-  - file: "src/templates/skills/context-search/SKILL.md"
+  - file: src/templates/skills/context-search/SKILL.md
     snippet: |
       ---
       name: context-search
@@ -74,8 +73,7 @@ examples:
 
       ## Prerequisites Check
       ...
-
-  - file: "src/templates/skills/context-add/SKILL.md"
+  - file: src/templates/skills/context-add/SKILL.md
     snippet: |
       ---
       name: context-add
@@ -100,25 +98,21 @@ examples:
       User input:
 
       $ARGUMENTS
-
 violations:
-  - "Placing SKILL.md directly in src/templates/skills/ instead of a named subdirectory"
-  - "Using a flat file instead of a directory (skills are always directories, even with just SKILL.md)"
+  - Placing SKILL.md directly in src/templates/skills/ instead of a named subdirectory
+  - Using a flat file instead of a directory (skills are always directories, even with just SKILL.md)
   - "Omitting the agents: field in frontmatter (prevents proper agent filtering during release)"
-  - "Using camelCase or PascalCase for skill directory names (must be kebab-case)"
-  - "Missing $ARGUMENTS placeholder when the skill accepts user input"
-  - "Omitting --- separators between major sections (reduces readability for AI agents)"
-  - "Including agent-specific tool names that other agents cannot use without documenting it"
-  - "Forgetting to add the skill to the release packaging pipeline test"
-
+  - Using camelCase or PascalCase for skill directory names (must be kebab-case)
+  - Missing $ARGUMENTS placeholder when the skill accepts user input
+  - Omitting --- separators between major sections (reduces readability for AI agents)
+  - Including agent-specific tool names that other agents cannot use without documenting it
+  - Forgetting to add the skill to the release packaging pipeline test
 reference_files:
-  - "src/templates/skills/context-extract/SKILL.md"
-  - "src/templates/skills/context-extract/assets/extraction-progress-template.yaml"
-  - "src/templates/skills/context-search/SKILL.md"
-  - "src/templates/skills/context-add/SKILL.md"
-  - ".github/workflows/scripts/create-release-packages.sh"
-  - "src/commands/upgrade/execution.ts"
-
+  - src/templates/skills/context-extract/SKILL.md
+  - src/templates/skills/context-search/SKILL.md
+  - src/templates/skills/context-add/SKILL.md
+  - .github/workflows/scripts/create-release-packages.sh
+  - src/commands/upgrade/execution.ts
 template: |
   # Skill Directory Structure
 
@@ -179,23 +173,20 @@ template: |
   ## Error Handling
 
   {How to handle failures gracefully.}
-
 frontmatter_fields:
   required:
     - field: name
-      format: "kebab-case, must match directory name"
+      format: kebab-case, must match directory name
       notes: |
         Follows the {noun}-{verb} naming convention (e.g., context-search, context-extract).
         Must exactly match the parent directory name in src/templates/skills/.
-
     - field: description
-      format: "String or multi-line >- block"
+      format: String or multi-line >- block
       notes: |
         Used by AI agents to determine when to invoke the skill. Should describe WHAT it does
         and WHEN to use it. Keep under 200 characters for single-line, or use >- for multi-line.
-
     - field: agents
-      format: "Array notation"
+      format: Array notation
       values:
         all: "[claude, cursor, opencode]"
         claude_only: "[claude]"
@@ -203,29 +194,25 @@ frontmatter_fields:
         Controls which agent release packages include this skill. The generate_skills()
         function in create-release-packages.sh reads this field and filters accordingly.
         Default should be all three agents unless the skill uses agent-specific features.
-
   optional:
     - field: user-invocable
-      format: "boolean"
-      when: "Skill can be directly invoked by users via slash command"
+      format: boolean
+      when: Skill can be directly invoked by users via slash command
       notes: |
         When true, the skill appears in the user's available slash commands.
         When false or omitted, the skill is only used internally by other skills or agents.
-
     - field: context
-      format: "fork"
-      when: "Skill needs isolated execution context"
+      format: fork
+      when: Skill needs isolated execution context
       notes: |
         Setting context: fork gives the skill a clean execution context, preventing
         it from being influenced by prior conversation state.
-
     - field: allowed-tools
-      format: "Array of tool names"
-      when: "Skill needs to restrict or specify available tools"
+      format: Array of tool names
+      when: Skill needs to restrict or specify available tools
       notes: |
         Lists the tools the skill is allowed to use. Common tools: Read, Write, Edit,
         Glob, Grep, Bash, Task.
-
 content_structure_conventions:
   argument_handling: |
     Every skill that accepts user input MUST include the $ARGUMENTS placeholder:
@@ -238,20 +225,16 @@ content_structure_conventions:
 
     This is placed after the title/description and before the first step. The runtime
     replaces $ARGUMENTS with the user's actual input.
-
   section_separators: |
     Use horizontal rules (---) between major sections. This improves readability for
     AI agents parsing the skill and provides clear boundaries between steps.
-
   step_numbering: |
     Use ## Step N: {Action Name} format for major steps. Start with Step 0 for
     prerequisites/routing. Use ### for sub-steps within a step (e.g., ### 1.1 Sub-step).
-
   error_handling: |
     Include explicit error handling instructions. Each skill should define what happens
     when preconditions fail, external operations time out, or unexpected states occur.
     Use STOP to indicate the skill should halt execution.
-
 multi_agent_support: |
   Skills support three agents: Claude, Cursor, and OpenCode. The distribution pipeline
   handles per-agent filtering:
@@ -286,9 +269,9 @@ multi_agent_support: |
     consistent across all three agents for skills.
   - No normalization needed: Unlike agent templates, skills are NOT passed through
     normalize-agent-templates.ts. They are copied as-is.
-
-existing_skills_inventory: |
+existing_skills_inventory: >
   Current skills in the codebase (as of 2026-02-19):
+
 
   1. context-extract
      - Purpose: Extract and update context files from codebase analysis
@@ -318,7 +301,6 @@ existing_skills_inventory: |
      - Features: Git diff analysis, rule matching, violation/warning/pass classification, actionable report
      - Frontmatter: user-invocable: true, allowed-tools: [Read, Glob, Grep, Bash]
      - Note: context: fork was removed — skill benefits from conversation context, read-only tools make isolation unnecessary
-
 related_context:
   - skill-naming-conventions
   - skills-bundling

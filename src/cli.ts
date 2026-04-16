@@ -11,6 +11,7 @@ import { generateCodegraph } from "./commands/graph/index.js";
 import { lookupModules } from "./commands/lookup/index.js";
 import { recallModules } from "./commands/recall/index.js";
 import { searchModules } from "./commands/search/index.js";
+import { validateCommand } from "./commands/validate/index.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -291,6 +292,19 @@ program
       limit: options.limit,
     });
     console.log(JSON.stringify(result, null, 2));
+  });
+
+program
+  .command("validate")
+  .description("Validate structural integrity of convention and verification files")
+  .option("--fix", "Deterministically repair broken references")
+  .action(async (options) => {
+    const projectPath = process.cwd();
+    const { result, exitCode } = await validateCommand(projectPath, {
+      fix: options.fix,
+    });
+    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    process.exit(exitCode);
   });
 
 program.parse(process.argv);

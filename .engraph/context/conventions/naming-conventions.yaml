@@ -11,7 +11,7 @@ last_updated: "2026-02-16"
 
 description: |
   Naming conventions ensure consistency across the codebase. These rules apply to files,
-  variables, folders, and identifiers throughout the Buildforce CLI and context repository.
+  variables, folders, and identifiers throughout the Engraph and context repository.
 
   KEY PRINCIPLE: Names should be semantic and discoverable, reflecting component identity
   rather than temporal or spec-specific information.
@@ -41,7 +41,7 @@ file_naming:
 
   index_files:
     pattern: "_index.yaml (underscore prefix)"
-    location: ".buildforce/context/_index.yaml"
+    location: ".engraph/context/_index.yaml"
     rationale: "Single unified index for all domains; underscore indicates meta-file"
 
   skill_files:
@@ -59,7 +59,7 @@ folder_naming:
       - "architecture/"
       - "conventions/"
       - "verification/"
-    location: ".buildforce/context/"
+    location: ".engraph/context/"
     rationale: "Domain-based organization aligned with context taxonomy"
 
 variable_naming:
@@ -141,9 +141,9 @@ template: |
   const specId = '...'       # camelCase
 
   # Bash variables
-  SPEC_DIR=".buildforce"     # UPPER_SNAKE_CASE
+  SPEC_DIR=".engraph"     # UPPER_SNAKE_CASE
 
 reference_files:
-  - "tsconfig.json (forceConsistentCasingInFileNames)"
-  - "src/templates/skills/context-extract/SKILL.md (context file naming rules)"
-  - "src/templates/skills/ (skill naming pattern)"
+  - "tsconfig.json"
+  - "src/templates/skills/context-extract/SKILL.md"
+  - "src/templates/skills/"
