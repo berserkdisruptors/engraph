@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "fs-extra";
 import path from "path";
+import { parse } from "yaml";
 import { createTempDir, cleanupTempDir } from "../../helpers/temp-dir.js";
 import { validateCommand } from "../../../src/commands/validate/index.js";
 
@@ -299,6 +300,217 @@ describe("validateCommand (integration)", () => {
       if (!hasErrors) {
         expect(exitCode).toBe(0);
       }
+    });
+  });
+
+  // ── Fix mode ──────────────────────────────────────────────────────────
+  describe("fix mode", () => {
+    describe("bridge field reference removal", () => {
+      beforeEach(async () => {
+        projectDir = await useFixture("broken-bridge-reference");
+      });
+
+      it("emits ENGRAPH_REFERENCE_REMOVED instead of ENGRAPH_UNRESOLVABLE_REFERENCE", async () => {
+        const { result } = await validateCommand(projectDir, { fix: true });
+        const removed = result.findings.filter(
+          (f) => f.code === "ENGRAPH_REFERENCE_REMOVED"
+        );
+        const unresolvable = result.findings.filter(
+          (f) => f.code === "ENGRAPH_UNRESOLVABLE_REFERENCE"
+        );
+        expect(removed.length).toBeGreaterThanOrEqual(1);
+        expect(unresolvable).toHaveLength(0);
+        for (const f of removed) {
+          expect(f.severity).toBe("info");
+          expect(typeof f.detail.field).toBe("string");
+          expect(typeof f.detail.removed).toBe("string");
+          expect(typeof f.detail.reason).toBe("string");
+        }
+      });
+
+      it("removes broken entry from YAML file on disk", async () => {
+        await validateCommand(projectDir, { fix: true });
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "broken-conv.yaml"
+        );
+        const content = parse(await fs.readFile(convPath, "utf8"));
+        expect(content.applies_to_modules).toEqual(["auth"]);
+        expect(content.applies_to_modules).not.toContain("payments");
+      });
+
+      it("preserves other file content after fix", async () => {
+        await validateCommand(projectDir, { fix: true });
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "broken-conv.yaml"
+        );
+        const content = parse(await fs.readFile(convPath, "utf8"));
+        expect(content.id).toBe("broken-conv");
+        expect(content.type).toBe("convention");
+        expect(content.provenance).toBe("manual");
+      });
+
+      it("file is still valid YAML after fix", async () => {
+        await validateCommand(projectDir, { fix: true });
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "broken-conv.yaml"
+        );
+        const raw = await fs.readFile(convPath, "utf8");
+        expect(() => parse(raw)).not.toThrow();
+      });
+    });
+
+    describe("file path removal", () => {
+      it("removes broken reference_files entries", async () => {
+        projectDir = await useFixture("broken-file-path");
+        const { result } = await validateCommand(projectDir, { fix: true });
+        const removed = result.findings.filter(
+          (f) => f.code === "ENGRAPH_FILE_PATH_REMOVED"
+        );
+        expect(removed.length).toBeGreaterThanOrEqual(1);
+
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "broken-ref-files.yaml"
+        );
+        const content = parse(await fs.readFile(convPath, "utf8"));
+        // Only the non-existent path should be removed
+        for (const ref of content.reference_files ?? []) {
+          expect(await fs.pathExists(path.resolve(projectDir, ref))).toBe(true);
+        }
+      });
+
+      it("removes entire example object for broken examples[].file", async () => {
+        projectDir = await useFixture("broken-example-file");
+        const { result } = await validateCommand(projectDir, { fix: true });
+        const removed = result.findings.filter(
+          (f) => f.code === "ENGRAPH_FILE_PATH_REMOVED"
+        );
+        expect(removed).toHaveLength(1);
+        expect(removed[0].detail.field).toBe("examples[0].file");
+
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "broken-example.yaml"
+        );
+        const content = parse(await fs.readFile(convPath, "utf8"));
+        expect(content.examples).toHaveLength(0);
+      });
+
+      it("removes broken known_risks[].module literal paths", async () => {
+        projectDir = await useFixture("broken-file-path");
+        await validateCommand(projectDir, { fix: true });
+
+        const verPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "verification",
+          "broken-risk-module.yaml"
+        );
+        const content = parse(await fs.readFile(verPath, "utf8"));
+        expect(content.known_risks).toHaveLength(0);
+      });
+    });
+
+    describe("read-only mode does not modify files", () => {
+      it("files are byte-identical without --fix", async () => {
+        projectDir = await useFixture("broken-bridge-reference");
+        const convPath = path.join(
+          projectDir,
+          ".engraph",
+          "context",
+          "conventions",
+          "broken-conv.yaml"
+        );
+        const before = await fs.readFile(convPath, "utf8");
+        await validateCommand(projectDir);
+        const after = await fs.readFile(convPath, "utf8");
+        expect(after).toBe(before);
+      });
+    });
+
+    describe("fix-creates-orphan", () => {
+      beforeEach(async () => {
+        projectDir = await useFixture("fix-creates-orphan");
+      });
+
+      it("removes broken reference but file is NOT orphaned", async () => {
+        const { result } = await validateCommand(projectDir, { fix: true });
+        const removed = result.findings.filter(
+          (f) => f.code === "ENGRAPH_REFERENCE_REMOVED"
+        );
+        const orphaned = result.findings.filter(
+          (f) => f.code === "ENGRAPH_ORPHANED_FILE"
+        );
+        expect(removed).toHaveLength(1);
+        expect(orphaned).toHaveLength(0);
+      });
+
+      it("exit 0 after fix resolves all errors", async () => {
+        const { exitCode } = await validateCommand(projectDir, { fix: true });
+        expect(exitCode).toBe(0);
+      });
+    });
+
+    describe("fix-empties-bridge-field", () => {
+      beforeEach(async () => {
+        projectDir = await useFixture("fix-empties-bridge-field");
+      });
+
+      it("empties bridge array and flags file as orphaned", async () => {
+        const { result } = await validateCommand(projectDir, { fix: true });
+        const removed = result.findings.filter(
+          (f) => f.code === "ENGRAPH_REFERENCE_REMOVED"
+        );
+        const orphaned = result.findings.filter(
+          (f) => f.code === "ENGRAPH_ORPHANED_FILE"
+        );
+        expect(removed.length).toBeGreaterThanOrEqual(1);
+        expect(orphaned).toHaveLength(1);
+      });
+
+      it("exit 1 when orphaned file remains after fix", async () => {
+        const { exitCode } = await validateCommand(projectDir, { fix: true });
+        expect(exitCode).toBe(1);
+      });
+    });
+
+    describe("fix-mode exit codes", () => {
+      it("exit 0 when --fix resolves all errors", async () => {
+        projectDir = await useFixture("fix-creates-orphan");
+        const { exitCode } = await validateCommand(projectDir, { fix: true });
+        expect(exitCode).toBe(0);
+      });
+
+      it("exit 1 when errors remain after fix", async () => {
+        projectDir = await useFixture("fix-empties-bridge-field");
+        const { exitCode } = await validateCommand(projectDir, { fix: true });
+        expect(exitCode).toBe(1);
+      });
+
+      it("exit 0 on already-clean project with --fix", async () => {
+        projectDir = await useFixture("valid-project");
+        const { exitCode } = await validateCommand(projectDir, { fix: true });
+        expect(exitCode).toBe(0);
+      });
     });
   });
 });

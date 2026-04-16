@@ -78,4 +78,30 @@ describe("checkBridgeReferences", () => {
     expect(findings).toHaveLength(1);
     expect(findings[0].detail.value).toBe("nonexistent");
   });
+
+  describe("fix mode", () => {
+    it("emits ENGRAPH_REFERENCE_REMOVED and mutates array", () => {
+      const file = makeFile("convention", ["auth", "nonexistent", "api"]);
+      const findings = checkBridgeReferences([file], aliasMap, true);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].code).toBe("ENGRAPH_REFERENCE_REMOVED");
+      expect(findings[0].severity).toBe("info");
+      expect(findings[0].detail.removed).toBe("nonexistent");
+      expect(file.content.applies_to_modules).toEqual(["auth", "api"]);
+      expect(file.modified).toBe(true);
+    });
+
+    it("does not mark file as modified when all references are valid", () => {
+      const file = makeFile("convention", ["auth", "api"]);
+      checkBridgeReferences([file], aliasMap, true);
+      expect(file.modified).toBeUndefined();
+    });
+
+    it("removes all broken entries leaving only valid ones", () => {
+      const file = makeFile("convention", ["bad1", "auth", "bad2"]);
+      const findings = checkBridgeReferences([file], aliasMap, true);
+      expect(findings).toHaveLength(2);
+      expect(file.content.applies_to_modules).toEqual(["auth"]);
+    });
+  });
 });

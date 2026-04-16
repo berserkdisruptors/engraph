@@ -88,4 +88,52 @@ describe("checkFilePaths", () => {
     const file = makeFile({ id: "test", type: "convention" });
     expect(await checkFilePaths([file], projectDir)).toEqual([]);
   });
+
+  describe("fix mode", () => {
+    it("removes broken reference_files and emits ENGRAPH_FILE_PATH_REMOVED", async () => {
+      const file = makeFile({
+        reference_files: ["src/auth/index.ts", "src/nonexistent.ts"],
+      });
+      const findings = await checkFilePaths([file], projectDir, true);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].code).toBe("ENGRAPH_FILE_PATH_REMOVED");
+      expect(findings[0].severity).toBe("info");
+      expect(file.content.reference_files).toEqual(["src/auth/index.ts"]);
+      expect(file.modified).toBe(true);
+    });
+
+    it("removes entire example object for broken examples[].file", async () => {
+      const file = makeFile({
+        examples: [
+          { file: "src/nonexistent.ts", snippet: "code" },
+          { file: "src/auth/index.ts", snippet: "other" },
+        ],
+      });
+      const findings = await checkFilePaths([file], projectDir, true);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].code).toBe("ENGRAPH_FILE_PATH_REMOVED");
+      expect((file.content.examples as unknown[]).length).toBe(1);
+      expect((file.content.examples as any[])[0].file).toBe("src/auth/index.ts");
+    });
+
+    it("removes broken known_risks[].module literal paths", async () => {
+      const file = makeFile({
+        known_risks: [{ module: "src/missing.ts", risk: "test" }],
+      });
+      const findings = await checkFilePaths([file], projectDir, true);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].code).toBe("ENGRAPH_FILE_PATH_REMOVED");
+      expect((file.content.known_risks as unknown[]).length).toBe(0);
+    });
+
+    it("does not remove glob entries from known_risks even with fix", async () => {
+      const file = makeFile({
+        known_risks: [{ module: "src/[unclosed/pattern", risk: "test" }],
+      });
+      const findings = await checkFilePaths([file], projectDir, true);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].code).toBe("ENGRAPH_INVALID_GLOB_SYNTAX");
+      expect((file.content.known_risks as unknown[]).length).toBe(1);
+    });
+  });
 });
