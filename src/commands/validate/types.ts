@@ -38,4 +38,5 @@ export interface ParsedContextFile {
   filePath: string;
   relativePath: string;
   content: Record<string, unknown>;
+  modified?: boolean;
 }

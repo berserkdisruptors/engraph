@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { parse } from "yaml";
+import { parse, stringify } from "yaml";
 import { buildAliasMap } from "../shared/alias-resolver.js";
 import { checkCodegraphExists } from "./checks/codegraph-exists.js";
 import { checkSchemaValidity } from "./checks/schema-validity.js";
@@ -18,6 +18,12 @@ import type {
 
 export type { ValidateResult, ValidateOptions };
 
+const YAML_WRITE_OPTIONS = {
+  lineWidth: 120,
+  defaultKeyType: "PLAIN" as const,
+  defaultStringType: "PLAIN" as const,
+};
+
 /**
  * Validate structural integrity of convention and verification files
  * against the current codegraph.
@@ -33,6 +39,7 @@ export async function validateCommand(
     "index.yaml"
   );
   const contextDir = path.join(projectPath, ".engraph", "context");
+  const fix = options.fix ?? false;
 
   // Precondition: codegraph must exist
   const codegraphFindings = await checkCodegraphExists(codegraphPath);
@@ -47,17 +54,32 @@ export async function validateCommand(
   // Build alias map from codegraph
   const aliasMap = await buildAliasMap(projectPath);
 
-  // Run all checks
+  // Run all checks (fix mode mutates content in place)
   const findings: Finding[] = [];
 
   findings.push(...checkSchemaValidity(contextFiles));
   findings.push(...checkIdUniqueness(contextFiles));
-  findings.push(...checkBridgeReferences(contextFiles, aliasMap));
-  findings.push(...(await checkFilePaths(contextFiles, projectPath)));
+  findings.push(...checkBridgeReferences(contextFiles, aliasMap, fix));
+  findings.push(...(await checkFilePaths(contextFiles, projectPath, fix)));
+
+  // Orphan detection runs after fixes so it sees the post-fix state
   findings.push(...checkOrphanedFiles(contextFiles, aliasMap));
+
+  // Write modified files back to disk
+  if (fix) {
+    await writeModifiedFiles(contextFiles);
+  }
 
   const result = formatResult(findings, codegraphPath, contextFiles.length);
   return { result, exitCode: getExitCode(result) };
+}
+
+async function writeModifiedFiles(files: ParsedContextFile[]): Promise<void> {
+  for (const file of files) {
+    if (!file.modified) continue;
+    const yamlContent = stringify(file.content, YAML_WRITE_OPTIONS);
+    await fs.writeFile(file.filePath, yamlContent, "utf8");
+  }
 }
 
 async function loadContextFiles(
