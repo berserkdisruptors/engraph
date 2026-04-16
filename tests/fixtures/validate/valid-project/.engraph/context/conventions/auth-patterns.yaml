@@ -1,0 +1,11 @@
+id: auth-patterns
+name: Auth Patterns
+type: convention
+sub_type: code-convention
+enforcement: recommended
+applies_to_modules:
+  - "auth/*"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Authentication patterns for auth modules

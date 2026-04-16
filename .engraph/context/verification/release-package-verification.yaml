@@ -1,5 +1,5 @@
 id: release-package-verification
-name: Release Package Verification
+name: "Release Package Verification"
 type: verification
 triggered_by_modules:
   - "commands/init"
@@ -129,7 +129,7 @@ known_risks:
     occurrences: 3
     last_flagged: "2026-02-19"
 
-  - module: "package.json (create-release-packages script)"
+  - module: "package.json"
     risk: "Hardcoded version v0.0.100 in npm script"
     mitigation: |
       The v0.0.100 version is intentionally hardcoded for local development.

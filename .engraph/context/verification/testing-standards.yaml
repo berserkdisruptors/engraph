@@ -1,5 +1,5 @@
 id: testing-standards
-name: Testing Standards
+name: "Testing Standards"
 type: verification
 triggered_by_modules:
   - "*"

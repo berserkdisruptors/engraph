@@ -10,7 +10,7 @@ created: "2026-02-02"
 last_updated: "2026-02-02"
 
 description: |
-  All YAML files in the Buildforce CLI codebase MUST use the `.yaml` extension exclusively.
+  All YAML files in the Engraph codebase MUST use the `.yaml` extension exclusively.
   The `.yml` extension is prohibited in source files and generated artifacts.
 
   This convention exists because mixed `.yaml`/`.yml` usage caused file-not-found errors
@@ -25,7 +25,7 @@ description: |
 
   SCOPE:
   - All files in `src/` directory
-  - All files in `.buildforce/` directory
+  - All files in `.engraph/` directory
   - All template files
   - All context repository files
 
@@ -43,94 +43,58 @@ description: |
   different file type entirely and are not subject to this convention.
 
 examples:
-  - file: "src/templates/spec-template.yaml"
+  - file: src/context/conventions/_schema.yaml
     snippet: |
-      # Template files use .yaml extension
-      id: "{SESSION_ID}"
-      name: "{SESSION_NAME}"
+      # Schema files use .yaml extension (with underscore prefix)
+      version: "1.0"
+      required_fields:
+        - id
+        - name
+        - type
       ...
-
-  - file: ".buildforce/context/architecture/cli-architecture.yaml"
-    snippet: |
-      # Context files use .yaml extension
-      id: cli-architecture
-      name: "CLI Architecture"
-      type: structural
-      ...
-
-  - file: "src/context/_index.yaml"
-    snippet: |
-      # System files use .yaml extension (with underscore prefix)
-      version: "2.1"
-      domains:
-        architecture:
-          schema: architecture/_schema.yaml
-      ...
-
 violations:
-  - "Creating any file with .yml extension in src/ or .buildforce/"
-  - "Referencing .yml in documentation or templates (use .yaml)"
-  - "Using .yml for new context files"
-  - "Using .yml for new session artifacts (spec.yaml, plan.yaml, research.yaml)"
-
+  - Creating any file with .yml extension in src/ or .engraph/
+  - Referencing .yml in documentation or templates (use .yaml)
+  - Using .yml for new context files
+  - Using .yml for new session artifacts (spec.yaml, plan.yaml, research.yaml)
 anti_patterns:
-  - pattern: "Mixed extensions in same directory"
-    example: "src/templates/spec-template.yaml alongside config.yml"
-    why_bad: "Creates inconsistency and confusion for file lookups"
+  - pattern: Mixed extensions in same directory
+    example: src/templates/spec-template.yaml alongside config.yml
+    why_bad: Creates inconsistency and confusion for file lookups
     correct: "Use .yaml for all files: spec-template.yaml, config.yaml"
-
-  - pattern: "Using .yml because it's shorter"
-    example: "config.yml instead of config.yaml"
-    why_bad: "Brevity doesn't justify breaking consistency"
-    correct: "Always use .yaml regardless of filename length"
-
-  - pattern: "Copying external examples verbatim"
-    example: "Copying a .yml example from Stack Overflow without extension change"
-    why_bad: "Introduces inconsistency from external sources"
-    correct: "Adapt external examples to use .yaml extension"
-
+  - pattern: Using .yml because it's shorter
+    example: config.yml instead of config.yaml
+    why_bad: Brevity doesn't justify breaking consistency
+    correct: Always use .yaml regardless of filename length
+  - pattern: Copying external examples verbatim
+    example: Copying a .yml example from Stack Overflow without extension change
+    why_bad: Introduces inconsistency from external sources
+    correct: Adapt external examples to use .yaml extension
 enforcement_mechanism:
   current:
-    - method: "Documentation"
-      description: "Templates and command instructions specify .yaml"
+    - method: Documentation
+      description: Templates and command instructions specify .yaml
       files:
-        - "src/templates/commands/plan.md"
-        - "src/templates/commands/build.md"
-        - "src/templates/commands/complete.md"
-    - method: "Code Review"
-      description: "Reviewers should reject PRs introducing .yml files"
-    - method: "Template Defaults"
-      description: "create-session-files.sh generates .yaml files by default"
+        - src/templates/commands/plan.md
+        - src/templates/commands/build.md
+        - src/templates/commands/complete.md
+    - method: Code Review
+      description: Reviewers should reject PRs introducing .yml files
+    - method: Template Defaults
+      description: create-session-files.sh generates .yaml files by default
   future_consideration: |
     A pre-commit hook or linter rule to prevent .yml files from being committed
     to src/ directory. This was noted as a future enhancement in the original
     standardization spec but has not been implemented.
   validation_command: |
     # Check for violations in source directories
-    find src .buildforce -name "*.yml" -not -path "*/node_modules/*" 2>/dev/null
-
+    find src .engraph -name "*.yml" -not -path "*/node_modules/*" 2>/dev/null
 reference_files:
-  - "src/templates/spec-template.yaml"
-  - "src/templates/plan-template.yaml"
-  - "src/templates/research-template.yaml"
-  - ".buildforce/context/_index.yaml"
-  - ".buildforce/context/architecture/_schema.yaml"
-
-related_context:
-  - architecture/yaml-extension-standard.yaml
-
+  - .engraph/context/_index.yaml
+  - src/context/conventions/_schema.yaml
+  - src/context/verification/_schema.yaml
 migration_guide: |
   If you encounter legacy .yml files:
   1. Use `git mv old-file.yml new-file.yaml` to preserve history
   2. Update all references to the file (grep for the filename)
   3. Verify no broken references with full test of affected commands
-
-  Current legacy violations (5 research.yml files in sessions):
-  - .buildforce/sessions/add-examples-command-20251030215737/research.yml
-  - .buildforce/sessions/revert-to-prefix-naming-20251104000000/research.yml
-  - .buildforce/sessions/standardize-cli-title-display-20250130220000/research.yml
-  - .buildforce/sessions/standardize-color-scheme-mint-20251031011544/research.yml
-  - .buildforce/sessions/standardize-lined-boxes-20250131000000/research.yml
-
-  These predate the 2025-11-03 standardization and are retained as historical
-  artifacts. New research files must use .yaml extension.

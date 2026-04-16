@@ -1,0 +1,113 @@
+import path from "path";
+import fs from "fs-extra";
+import { parseDocument } from "yaml";
+import { buildAliasMap } from "../shared/alias-resolver.js";
+import { checkCodegraphExists } from "./checks/codegraph-exists.js";
+import { checkSchemaValidity } from "./checks/schema-validity.js";
+import { checkIdUniqueness } from "./checks/id-uniqueness.js";
+import { checkBridgeReferences } from "./checks/bridge-references.js";
+import { checkFilePaths } from "./checks/file-paths.js";
+import { checkOrphanedFiles } from "./checks/orphaned-files.js";
+import { formatResult, getExitCode } from "./formatter.js";
+import type {
+  Finding,
+  ValidateOptions,
+  ValidateResult,
+  ParsedContextFile,
+} from "./types.js";
+
+export type { ValidateResult, ValidateOptions };
+
+/**
+ * Validate structural integrity of convention and verification files
+ * against the current codegraph.
+ */
+export async function validateCommand(
+  projectPath: string,
+  options: ValidateOptions = {}
+): Promise<{ result: ValidateResult; exitCode: number }> {
+  const codegraphPath = path.join(
+    projectPath,
+    ".engraph",
+    "codegraph",
+    "index.yaml"
+  );
+  const contextDir = path.join(projectPath, ".engraph", "context");
+  const fix = options.fix ?? false;
+
+  // Precondition: codegraph must exist
+  const codegraphFindings = await checkCodegraphExists(codegraphPath);
+  if (codegraphFindings.length > 0) {
+    const result = formatResult(codegraphFindings, codegraphPath, 0);
+    return { result, exitCode: getExitCode(result) };
+  }
+
+  // Load all context files
+  const contextFiles = await loadContextFiles(contextDir);
+
+  // Build alias map from codegraph
+  const aliasMap = await buildAliasMap(projectPath);
+
+  // Run all checks (fix mode mutates document AST in place)
+  const findings: Finding[] = [];
+
+  findings.push(...checkSchemaValidity(contextFiles));
+  findings.push(...checkIdUniqueness(contextFiles));
+  findings.push(...checkBridgeReferences(contextFiles, aliasMap, fix));
+  findings.push(...(await checkFilePaths(contextFiles, projectPath, fix)));
+
+  // Orphan detection runs after fixes so it sees the post-fix state
+  findings.push(...checkOrphanedFiles(contextFiles, aliasMap));
+
+  // Write modified files back to disk using document.toString() to preserve formatting
+  if (fix) {
+    await writeModifiedFiles(contextFiles);
+  }
+
+  const result = formatResult(findings, codegraphPath, contextFiles.length);
+  return { result, exitCode: getExitCode(result) };
+}
+
+async function writeModifiedFiles(files: ParsedContextFile[]): Promise<void> {
+  for (const file of files) {
+    if (!file.modified || !file.document) continue;
+    await fs.writeFile(file.filePath, file.document.toString(), "utf8");
+  }
+}
+
+async function loadContextFiles(
+  contextDir: string
+): Promise<ParsedContextFile[]> {
+  const files: ParsedContextFile[] = [];
+
+  for (const domain of ["conventions", "verification"]) {
+    const domainDir = path.join(contextDir, domain);
+    if (!(await fs.pathExists(domainDir))) continue;
+
+    const entries = await fs.readdir(domainDir);
+    for (const entry of entries) {
+      // Skip schema and index files
+      if (entry.startsWith("_")) continue;
+      if (!entry.endsWith(".yaml") && !entry.endsWith(".yml")) continue;
+
+      const filePath = path.join(domainDir, entry);
+      try {
+        const raw = await fs.readFile(filePath, "utf8");
+        const document = parseDocument(raw);
+        const content = document.toJSON();
+        if (content && typeof content === "object") {
+          files.push({
+            filePath,
+            relativePath: `${domain}/${entry}`,
+            content,
+            document,
+          });
+        }
+      } catch {
+        // Skip unparseable files
+      }
+    }
+  }
+
+  return files;
+}

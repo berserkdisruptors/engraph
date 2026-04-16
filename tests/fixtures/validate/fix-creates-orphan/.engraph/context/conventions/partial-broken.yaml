@@ -1,0 +1,10 @@
+id: partial-broken
+name: Partially Broken Convention
+type: convention
+applies_to_modules:
+  - "auth"
+  - "payments"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Convention with one valid and one broken reference — fix removes broken, file is NOT orphaned

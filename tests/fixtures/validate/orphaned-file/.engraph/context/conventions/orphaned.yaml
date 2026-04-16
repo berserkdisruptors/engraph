@@ -1,0 +1,10 @@
+id: orphaned
+name: Orphaned Convention
+type: convention
+applies_to_modules:
+  - "payments"
+  - "billing"
+provenance: manual
+created: "2026-01-01"
+last_updated: "2026-01-01"
+description: Convention where all module references are unresolvable
