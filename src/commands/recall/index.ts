@@ -166,8 +166,13 @@ function parseGitLogOutput(output: string, searchTerm: string): RecallCommit[] {
     // Rest of lines are the body — parse action lines
     const actions: Record<string, string[]> = {};
 
+    // Track the last action entry we matched so we can append multi-line continuations
+    let lastActionType: string | null = null;
+    let lastActionIndex: number = -1;
+
     for (let i = 1; i < lines.length; i++) {
-      const match = lines[i].trim().match(ACTION_LINE_RE);
+      const line = lines[i];
+      const match = line.trim().match(ACTION_LINE_RE);
       if (match) {
         const [, actionType, scope, description] = match;
         // Only include action lines that match our search term
@@ -176,7 +181,15 @@ function parseGitLogOutput(output: string, searchTerm: string): RecallCommit[] {
             actions[actionType] = [];
           }
           actions[actionType].push(description);
+          lastActionType = actionType;
+          lastActionIndex = actions[actionType].length - 1;
+        } else {
+          lastActionType = null;
+          lastActionIndex = -1;
         }
+      } else if (lastActionType && line.startsWith(" ")) {
+        // Continuation of a multi-line action line (indented)
+        actions[lastActionType][lastActionIndex] += " " + line.trim();
       }
     }
 

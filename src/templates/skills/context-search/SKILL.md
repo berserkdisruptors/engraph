@@ -41,7 +41,8 @@ Read `.engraph/codegraph/index.yaml` and determine which module IDs are relevant
 1. Read the root codegraph index — it contains the project profile and all top-level modules with their descriptions, dependencies, and imports.
 2. Match the query to module IDs based on the module descriptions, file paths, and the topic being asked about.
 3. If a relevant module has a `sub_graph` field, follow that reference and read the sub-graph to find deeper, more specific modules.
-4. **Over-include rather than under-include.** False positives are filtered in synthesis (cheap). False negatives miss relevant conventions (expensive).
+4. **Consider related modules that might contain relevant reasoning.** A constraint about a dependency's ABI could be recorded in the parent module; a design decision about sub-module extractors could be in a sibling. If the query is about `commands/graph`, check whether `commands/graph/languages` might carry useful signal. If it's about a specific language extractor, consider whether the parent `commands/graph` has broader constraints. If it's about a shared utility (`utils`), sibling modules that depend on it may document migration or usage patterns. **Err on the side of inclusion** — the synthesis step filters noise, but a missing module cannot be recovered.
+5. **Over-include rather than under-include.** False positives are filtered in synthesis (cheap). False negatives miss relevant conventions (expensive).
 
 **Examples:**
 
@@ -51,6 +52,8 @@ Read `.engraph/codegraph/index.yaml` and determine which module IDs are relevant
 | "how should I write a new skill?" | `templates/skills/*` modules |
 | "what are the testing standards?" | `*` (global query) |
 | "tell me about the upgrade migrations" | `commands/upgrade/migrations` |
+| "why is parser X pinned to version Y?" | `commands/graph`, `commands/graph/languages` (dependency constraint in parent, language-specific usage in child) |
+| "how do language extractors work?" | `commands/graph/languages`, `commands/graph` (extractor logic in child, orchestration decisions in parent) |
 
 **Structural context as a byproduct:** As you read the codegraph for resolution, you naturally absorb module descriptions, dependencies, imports/exports, and blast radius. This structural understanding becomes the third data source alongside lookup and recall — no separate step needed.
 
