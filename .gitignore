@@ -23,6 +23,7 @@ dist/
 .claude/**
 .cursor/**
 .opencode/**
+.agents/**
 
 # Release packages
 .genreleases/
