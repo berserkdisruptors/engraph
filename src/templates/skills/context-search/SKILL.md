@@ -42,7 +42,8 @@ Read `.engraph/codegraph/index.yaml` and determine which module IDs are relevant
 2. Match the query to module IDs based on the module descriptions, file paths, and the topic being asked about.
 3. If a relevant module has a `sub_graph` field, follow that reference and read the sub-graph to find deeper, more specific modules.
 4. **Consider related modules that might contain relevant reasoning.** A constraint about a dependency's ABI could be recorded in the parent module; a design decision about sub-module extractors could be in a sibling. If the query is about `commands/graph`, check whether `commands/graph/languages` might carry useful signal. If it's about a specific language extractor, consider whether the parent `commands/graph` has broader constraints. If it's about a shared utility (`utils`), sibling modules that depend on it may document migration or usage patterns. **Err on the side of inclusion** — the synthesis step filters noise, but a missing module cannot be recovered.
-5. **Over-include rather than under-include.** False positives are filtered in synthesis (cheap). False negatives miss relevant conventions (expensive).
+5. **Prefer broader scope when a query is ambiguous or partially specific.** A query may hint at a module (e.g., "the queue module") but actually seek surrounding conventions (e.g., "integration test setup"). If the user's intent is unclear or the topic straddles module boundaries, include the hinted module **plus** a broader scope (parent, root, or wildcard) so cross-cutting conventions are not missed.
+6. **Over-include rather than under-include.** False positives are filtered in synthesis (cheap). False negatives miss relevant conventions (expensive).
 
 **Examples:**
 
@@ -54,6 +55,9 @@ Read `.engraph/codegraph/index.yaml` and determine which module IDs are relevant
 | "tell me about the upgrade migrations" | `commands/upgrade/migrations` |
 | "why is parser X pinned to version Y?" | `commands/graph`, `commands/graph/languages` (dependency constraint in parent, language-specific usage in child) |
 | "how do language extractors work?" | `commands/graph/languages`, `commands/graph` (extractor logic in child, orchestration decisions in parent) |
+| "how do graph commands work?" *(ambiguous — could mean orchestration, language support, or general usage)* | `commands/graph`, `commands/graph/*` (include all sub-graph modules) |
+| "tell me about the project generally" *(no specific target)* | `*` (global/root scope) |
+| "I want to add integration tests for the queue module but I don't know if we have a setup" *(hints at a module, but seeks cross-cutting conventions)* | `queue`, `*` (module-specific and root/global scope) |
 
 **Structural context as a byproduct:** As you read the codegraph for resolution, you naturally absorb module descriptions, dependencies, imports/exports, and blast radius. This structural understanding becomes the third data source alongside lookup and recall — no separate step needed.
 
