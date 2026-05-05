@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import { createTempDir, cleanupTempDir } from '../../helpers/temp-dir.js';
-import { readEngraphConfig, saveEngraphConfig } from '../../../src/utils/config.js';
+import { readEngraphConfig, saveEngraphConfig, detectInstalledAgents } from '../../../src/utils/config.js';
 
 describe('config I/O (integration)', () => {
   let projectDir: string;
@@ -26,12 +26,11 @@ describe('config I/O (integration)', () => {
       const configPath = path.join(projectDir, '.engraph', 'engraph.json');
       await fs.writeFile(
         configPath,
-        JSON.stringify({ framework: 'engraph', version: '1.0' })
+        JSON.stringify({ version: '1.0' })
       );
 
       const config = readEngraphConfig(projectDir);
       expect(config).not.toBeNull();
-      expect(config!.framework).toBe('engraph');
       expect(config!.version).toBe('1.0');
     });
 
@@ -50,21 +49,34 @@ describe('config I/O (integration)', () => {
 
       const config = readEngraphConfig(projectDir);
       expect(config).not.toBeNull();
-      expect(config!.framework).toBe('engraph');
       expect(config!.version).toBe('2.0');
     });
 
-    it('merges with existing config', async () => {
+    it('removes legacy aiAssistants field when merging', async () => {
       const configPath = path.join(projectDir, '.engraph', 'engraph.json');
       await fs.writeFile(
         configPath,
-        JSON.stringify({ framework: 'engraph', aiAssistants: ['claude'] })
+        JSON.stringify({ aiAssistants: ['claude'], version: '1.0' })
       );
 
       saveEngraphConfig(projectDir, { version: '2.0' });
 
       const config = readEngraphConfig(projectDir);
-      expect(config!.aiAssistants).toEqual(['claude']);
+      expect((config as any).aiAssistants).toBeUndefined();
+      expect(config!.version).toBe('2.0');
+    });
+
+    it('removes legacy framework field when merging', async () => {
+      const configPath = path.join(projectDir, '.engraph', 'engraph.json');
+      await fs.writeFile(
+        configPath,
+        JSON.stringify({ framework: 'engraph', version: '1.0' })
+      );
+
+      saveEngraphConfig(projectDir, { version: '2.0' });
+
+      const config = readEngraphConfig(projectDir);
+      expect((config as any).framework).toBeUndefined();
       expect(config!.version).toBe('2.0');
     });
 
@@ -72,7 +84,7 @@ describe('config I/O (integration)', () => {
       const configPath = path.join(projectDir, '.engraph', 'engraph.json');
       await fs.writeFile(
         configPath,
-        JSON.stringify({ framework: 'engraph', version: '1.0' })
+        JSON.stringify({ version: '1.0' })
       );
 
       saveEngraphConfig(projectDir, { version: '2.0' });
@@ -88,8 +100,35 @@ describe('config I/O (integration)', () => {
       saveEngraphConfig(projectDir, { version: '2.0' });
 
       const config = readEngraphConfig(projectDir);
-      expect(config!.framework).toBe('engraph');
       expect(config!.version).toBe('2.0');
+    });
+  });
+
+  describe('detectInstalledAgents', () => {
+    it('returns empty array when no agent skills folders exist', () => {
+      const result = detectInstalledAgents(projectDir);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array when skills folder exists but has no engraph skills', async () => {
+      await fs.ensureDir(path.join(projectDir, '.claude', 'skills', 'some-other-skill'));
+      const result = detectInstalledAgents(projectDir);
+      expect(result).toEqual([]);
+    });
+
+    it('detects claude when an engraph skill exists in .claude/skills', async () => {
+      await fs.ensureDir(path.join(projectDir, '.claude', 'skills', 'context-search'));
+      const result = detectInstalledAgents(projectDir);
+      expect(result).toContain('claude');
+    });
+
+    it('detects multiple agents when engraph skills exist in multiple agent folders', async () => {
+      await fs.ensureDir(path.join(projectDir, '.claude', 'skills', 'context-commit'));
+      await fs.ensureDir(path.join(projectDir, '.cursor', 'skills', 'context-verify'));
+      const result = detectInstalledAgents(projectDir);
+      expect(result).toContain('claude');
+      expect(result).toContain('cursor');
+      expect(result).not.toContain('opencode');
     });
   });
 });

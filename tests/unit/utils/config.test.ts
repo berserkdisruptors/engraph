@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getDefaultConfig, createConfigContent } from '../../../src/utils/config.js';
+import { getDefaultConfig, createConfigContent, detectInstalledAgents } from '../../../src/utils/config.js';
 
 describe('getDefaultConfig', () => {
-  it('returns object with framework: engraph', () => {
+  it('returns empty object', () => {
     const config = getDefaultConfig();
-    expect(config).toEqual({ framework: 'engraph' });
+    expect(config).toEqual({});
   });
 
   it('returns a new object each call', () => {
@@ -16,46 +16,44 @@ describe('getDefaultConfig', () => {
 });
 
 describe('createConfigContent', () => {
-  it('returns JSON with default config when no args', () => {
+  it('returns empty JSON object when no args', () => {
     const content = createConfigContent();
     const parsed = JSON.parse(content);
-    expect(parsed).toEqual({ framework: 'engraph' });
-  });
-
-  it('includes aiAssistants when provided', () => {
-    const content = createConfigContent(['claude', 'cursor']);
-    const parsed = JSON.parse(content);
-    expect(parsed.aiAssistants).toEqual(['claude', 'cursor']);
+    expect(parsed).toEqual({});
   });
 
   it('includes version when provided', () => {
-    const content = createConfigContent(undefined, '1.0.0');
+    const content = createConfigContent('1.0.0');
     const parsed = JSON.parse(content);
     expect(parsed.version).toBe('1.0.0');
   });
 
-  it('includes both aiAssistants and version', () => {
-    const content = createConfigContent(['claude'], '2.0.0');
-    const parsed = JSON.parse(content);
-    expect(parsed.aiAssistants).toEqual(['claude']);
-    expect(parsed.version).toBe('2.0.0');
-    expect(parsed.framework).toBe('engraph');
-  });
-
   it('produces formatted JSON with trailing newline', () => {
-    const content = createConfigContent();
+    const content = createConfigContent('1.0.0');
     expect(content).toMatch(/\n$/);
-    // Indented with 2 spaces (JSON.stringify(x, null, 2))
-    expect(content).toContain('  "framework"');
+    expect(content).toContain('  "version"');
   });
 
-  it('does not include aiAssistants key when undefined', () => {
-    const content = createConfigContent();
+  it('does not include framework or aiAssistants keys', () => {
+    const content = createConfigContent('1.0.0');
+    expect(content).not.toContain('framework');
     expect(content).not.toContain('aiAssistants');
   });
 
-  it('does not include version key when undefined', () => {
+  it('does not include version key when not provided', () => {
     const content = createConfigContent();
     expect(content).not.toContain('version');
+  });
+});
+
+describe('detectInstalledAgents', () => {
+  it('returns empty array when no agent skills folders exist', () => {
+    const result = detectInstalledAgents('/nonexistent/path/that/has/no/skills');
+    expect(result).toEqual([]);
+  });
+
+  it('returns an array', () => {
+    const result = detectInstalledAgents('/some/path');
+    expect(Array.isArray(result)).toBe(true);
   });
 });

@@ -26,8 +26,5 @@ export function createAgentTemplate(opts: {
  * Create a minimal engraph.json config object.
  */
 export function createEngraphConfig(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
-    framework: 'engraph',
-    ...overrides,
-  };
+  return { ...overrides };
 }
