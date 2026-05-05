@@ -1,31 +1,44 @@
 import fs from "fs-extra";
 import path from "path";
 import { EngraphConfig } from "../types.js";
+import { AGENT_FOLDER_MAP, ENGRAPH_SKILL_NAMES } from "../config/agents.js";
 
 /**
  * Get the default Engraph configuration
  */
 export function getDefaultConfig(): EngraphConfig {
-  return {
-    framework: "engraph",
-  };
+  return {};
 }
 
 /**
  * Create a engraph.json config file content
- * @param aiAssistants - Optional AI agent names array
  * @param version - Optional CLI version
  */
-export function createConfigContent(
-  aiAssistants?: string[],
-  version?: string
-): string {
+export function createConfigContent(version?: string): string {
   const config: EngraphConfig = {
     ...getDefaultConfig(),
-    ...(aiAssistants && { aiAssistants }),
     ...(version && { version }),
   };
   return JSON.stringify(config, null, 2) + "\n";
+}
+
+/**
+ * Detect which AI agents have engraph skills installed by checking for the
+ * presence of at least one known engraph skill directory inside the agent's
+ * skills/ folder. A skills/ folder alone is not enough — it must contain at
+ * least one engraph skill to be considered an engraph installation.
+ * @param projectPath - Path to the project directory
+ * @returns Array of agent keys (e.g. ["claude", "cursor"]) with engraph installed
+ */
+export function detectInstalledAgents(projectPath: string): string[] {
+  return Object.entries(AGENT_FOLDER_MAP)
+    .filter(([, folder]) => {
+      const skillsDir = path.join(projectPath, folder, "skills");
+      return ENGRAPH_SKILL_NAMES.some((skill) =>
+        fs.existsSync(path.join(skillsDir, skill))
+      );
+    })
+    .map(([agent]) => agent);
 }
 
 /**
@@ -82,6 +95,14 @@ export function saveEngraphConfig(
     ...existingConfig,
     ...updates,
   };
+
+  // Clean up deprecated fields from old configs
+  if ('aiAssistants' in mergedConfig) {
+    delete (mergedConfig as any).aiAssistants;
+  }
+  if ('framework' in mergedConfig) {
+    delete (mergedConfig as any).framework;
+  }
 
   // Write back to file
   fs.writeFileSync(

@@ -193,7 +193,7 @@ export async function setupProject(
     await fs.ensureDir(engraphDir);
 
     const configPath = path.join(engraphDir, "engraph.json");
-    const configContent = createConfigContent(successfulAgents, version);
+    const configContent = createConfigContent(version);
 
     if (debug) {
       console.log(chalk.gray(`\nWriting config to: ${configPath}`));

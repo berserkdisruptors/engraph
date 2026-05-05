@@ -410,13 +410,11 @@ export async function executeUpgrade(
         }
       }
 
-      // Update engraph.json with version metadata
+      // Update engraph.json with version metadata (also cleans up legacy aiAssistants/framework)
+      // Skip version write for local development runs — preserve the last real release version
       tracker.start("update-config");
-      saveEngraphConfig(projectPath, {
-        aiAssistants: successfulAgents,
-        version: version,
-      });
-      tracker.complete("update-config", `version ${version}`);
+      saveEngraphConfig(projectPath, version !== "local" ? { version } : {});
+      tracker.complete("update-config", version !== "local" ? `version ${version}` : "cleanup only");
 
       // Keep AGENTS.md / CLAUDE.md aligned with Engraph context usage.
       const instructionFiles = await ensureEngraphInstructionFiles(projectPath, {

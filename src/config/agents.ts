@@ -11,3 +11,11 @@ export const AGENT_FOLDER_MAP: Record<string, string> = {
   cursor: ".cursor/",
   opencode: ".opencode/",
 };
+
+export const ENGRAPH_SKILL_NAMES: string[] = [
+  "context-search",
+  "context-commit",
+  "context-verify",
+  "context-extract",
+  "context-add",
+];
