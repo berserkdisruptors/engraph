@@ -1,11 +1,11 @@
 {
   "name": "engraph",
   "version": "0.0.8",
-  "description": "Engraph - The context layer for agentic coding",
+  "description": "The expertise layer for your coding agent",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "engraph": "./dist/cli.js"
+    "engraph": "dist/cli.js"
   },
   "files": [
     "dist/**/*",
@@ -22,7 +22,6 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
     "test:coverage": "vitest run --coverage",
-    "commit": "cz",
     "prepublishOnly": "npm run build",
     "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100",
     "upgrade": "npm run build && npm run create-release-packages && engraph upgrade --local"
@@ -34,18 +33,15 @@
     "agentic-coding",
     "ai-assisted-development"
   ],
-  "author": "Berserk Disruptors",
-  "license": "Apache License 2.0",
+  "author": "Veselin Dimitrov",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/berserkdisruptors/engraph"
+    "url": "git+https://github.com/berserkdisruptors/engraph.git"
   },
   "homepage": "https://github.com/berserkdisruptors/engraph#readme",
   "bugs": {
     "url": "https://github.com/berserkdisruptors/engraph/issues"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.9.0",
