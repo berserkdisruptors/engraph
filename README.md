@@ -259,7 +259,7 @@ Tried Engraph with an agent that's not on the tested list? See [AI Agent Compati
 
 ## License
 
-Apache License 2.0 - see [LICENSE](LICENSE) for details.
+MIT - see [LICENSE](LICENSE) for details.
 
 ---
 
