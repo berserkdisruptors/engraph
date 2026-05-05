@@ -1,6 +1,6 @@
 {
   "name": "engraph",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "The expertise layer for your coding agent",
   "type": "module",
   "main": "dist/cli.js",
