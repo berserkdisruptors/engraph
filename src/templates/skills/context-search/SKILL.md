@@ -6,7 +6,7 @@ description: >-
   reasoning. Taps all Engraph resources: codegraph (structural), conventions
   and verification (behavioral), and contextual commit history (temporal).
   Use when the conversation needs context that source files alone cannot provide.
-agents: [claude, cursor, opencode]
+user-invocable: true
 allowed-tools: [Read, Glob, Grep, Bash]
 ---
 

@@ -5,7 +5,6 @@ description: >-
   files to codegraph modules, loads scoped conventions and verification
   procedures, checks historical constraints from contextual commits, and
   executes verification steps. Produces a structured report with findings.
-agents: [claude, cursor, opencode]
 user-invocable: true
 allowed-tools:
   - Read

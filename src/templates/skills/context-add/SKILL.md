@@ -5,9 +5,7 @@ description: >-
   convention or verification rule, determines which codegraph modules it
   applies to, grounds it with real codebase examples, and creates a
   structured context file with bridge fields.
-agents: [claude, cursor, opencode]
 user-invocable: true
-context: fork
 allowed-tools:
   - Read
   - Write

@@ -6,7 +6,8 @@ description: >-
   when the user asks to commit. Extends Conventional Commits with structured
   action lines in the commit body that preserve WHY code was written, not
   just WHAT changed. Validates scopes against the codegraph.
-agents: [claude, cursor, opencode]
+user-invocable: true
+allowed-tools: [Read, Glob, Grep, Bash]
 ---
 
 # Contextual Commits
