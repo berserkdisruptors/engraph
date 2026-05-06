@@ -28,14 +28,22 @@ Run `engraph graph` to ensure the codegraph is up to date. This is fast and dete
 engraph graph
 ```
 
-### 1. Check Staged Changes
+### 1. Snapshot Staged State at Invocation
 
-Run `git diff --cached --stat`.
+**Before doing anything else**, run `git diff --cached --stat` and record the result. This is the invocation snapshot — the set of files the user had staged when the skill was called. It determines which path applies for the entire run. Do not re-evaluate this later; files staged by you during the workflow are not part of the invocation snapshot.
 
-- **If staged changes exist:** these are the commit scope. Do not consider unstaged or untracked files — the user has already expressed what belongs in this commit by staging it.
-- **If nothing is staged:** consider all unstaged modifications and untracked files as candidates. Use session context and the diff to decide what to stage and commit.
+#### Path A — files were staged at invocation
 
-**Logical grouping:** When multiple files are staged, check that they all belong to the same logical change. If every file is part of one coherent unit of work (a single feature, fix, or refactor), proceed as one commit. If the staged set mixes unrelated concerns — for example, a bug fix alongside an unrelated config cleanup — **stop and ask the user** which files to stage for the first commit before continuing. Never silently merge unrelated changes into one commit.
+The user deliberately staged these files before calling the skill. They are the entire scope of this commit. Do not look at unstaged or untracked files. After committing the invocation snapshot, **stop** — do not proceed to commit anything else.
+
+#### Path B — nothing was staged at invocation
+
+The user wants to commit their full session's work. Run `git status` and `git diff` to get the complete picture of all unstaged modifications and untracked files.
+
+**Group by logical unit.** Examine the full diff and determine whether all changes belong to the same logical change (one feature, fix, or refactor) or span multiple unrelated concerns.
+
+- **One logical unit:** stage everything, commit it as one, done.
+- **Multiple logical units:** identify the groups. For each group in sequence: present the proposed staging to the user, wait for approval, stage those files, write the commit draft, wait for approval again, then commit. Repeat until all groups are committed. Never silently bundle unrelated changes into one commit.
 
 ### 2. Check Branch History for Existing Context
 
@@ -233,5 +241,6 @@ What you CANNOT infer — do not fabricate:
 12. **Don't fabricate context you don't have.** See "When You Lack Conversation Context" above.
 13. **Don't duplicate reasoning from prior commits.** Check branch history first. Each commit adds new signal to the timeline, not a restated summary.
 14. **Prefer an empty body over noise.** A subject-only commit is a valid contextual commit. Not every change produces reasoning worth capturing.
-15. **Check logical grouping before committing.** If staged files span unrelated concerns, stop and ask the user to split before proceeding.
-16. **Always get user approval before committing.** Present the full draft and wait for explicit confirmation. Never run `git commit` without it.
+15. **The invocation snapshot is the fixed scope for Path A.** Record what was staged when the skill was called; never re-check mid-workflow. Files staged by the agent during the run are not user-staged and do not extend Path A scope. Stop after committing the snapshot.
+16. **Path B requires logical grouping before staging anything.** Analyse the full unstaged diff first, group by logical unit, then stage and commit each group separately with user approval at each step.
+17. **Always get user approval before committing.** Present the full draft and wait for explicit confirmation. Never run `git commit` without it.
