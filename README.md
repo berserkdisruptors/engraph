@@ -75,7 +75,7 @@ npx engraph init .
 engraph upgrade
 ```
 
-Pulls the latest skill versions into your selected agents while preserving your context layer and configuration. See `engraph upgrade --help` for options like `--ai claude` and `--debug`.
+Pulls the latest skill versions into your selected agents while preserving your context layer and configuration. See `engraph upgrade --help` for options like `--agents claude` and `--debug`.
 
 ## How To Use
 

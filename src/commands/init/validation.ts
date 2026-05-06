@@ -117,7 +117,7 @@ export function validateAiAssistant(
   if (!aiChoices[selectedAi]) {
     console.error(
       chalk.red("Error:"),
-      `Invalid AI agent '${selectedAi}'. Choose from: ${Object.keys(
+      `Invalid agent '${selectedAi}'. Choose from: ${Object.keys(
         aiChoices
       ).join(", ")}`
     );

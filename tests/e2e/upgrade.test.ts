@@ -53,7 +53,7 @@ describe('engraph upgrade (e2e)', () => {
 
   it('runs upgrade with --local flag and removes legacy aiAssistants', async () => {
     execSync(
-      `node ${CLI_PATH} upgrade --ai claude --local ${localArtifactsDir}`,
+      `node ${CLI_PATH} upgrade --agents claude --local ${localArtifactsDir}`,
       {
         encoding: 'utf8',
         timeout: 30000,
@@ -74,7 +74,7 @@ describe('engraph upgrade (e2e)', () => {
 
     try {
       execSync(
-        `node ${CLI_PATH} upgrade --ai claude --local ${localArtifactsDir}`,
+        `node ${CLI_PATH} upgrade --agents claude --local ${localArtifactsDir}`,
         {
           encoding: 'utf8',
           timeout: 10000,
@@ -93,7 +93,7 @@ describe('engraph upgrade (e2e)', () => {
   it('preserves existing engraph.json framework on failure', async () => {
     try {
       execSync(
-        `node ${CLI_PATH} upgrade --ai claude --local ${localArtifactsDir}`,
+        `node ${CLI_PATH} upgrade --agents claude --local ${localArtifactsDir}`,
         {
           encoding: 'utf8',
           timeout: 30000,

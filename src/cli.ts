@@ -122,18 +122,18 @@ program.configureHelp({
 // Init command
 program
   .command("init", { isDefault: true })
-  .description("Initialize Engraph and slash commands")
+  .description("Initialize Engraph and install agent skills")
   .argument(
     "[project-name]",
     'Name for your new project directory (optional if using --here, or use "." for current directory)'
   )
   .option(
-    "--ai <agent...>",
-    "AI agent(s) to use (can specify multiple): universal, claude, or pi"
+    "--agents <agent...>",
+    "Agents to use (can specify multiple): universal, claude, or pi"
   )
   .option(
     "--ignore-agent-tools",
-    "Skip checks for AI agent tools like Claude Code"
+    "Skip checks for agent tools like Claude Code"
   )
   .option("--no-git", "Skip git repository initialization")
   .option(
@@ -156,7 +156,7 @@ program
   .option(
     "--local [path]",
     "Use local artifacts from directory instead of GitHub (default: .genreleases)\n" +
-      "Example: engraph init my-project --local --ai claude"
+      "Example: engraph init my-project --local --agents universal"
   )
   .action(async (projectName, options) => {
     // If no project name and no flags, show help
@@ -169,7 +169,7 @@ program
 
     await initCommand({
       projectName,
-      aiAssistant: options.ai,
+      aiAssistant: options.agents,
       ignoreAgentTools: options.ignoreAgentTools,
       noGit: !options.git,
       here: options.here,
@@ -184,11 +184,11 @@ program
 program
   .command("upgrade")
   .description(
-    "Upgrade project templates, commands, and scripts to the latest version"
+    "Upgrade Engraph agent skills to the latest version"
   )
   .option(
-    "--ai <agent...>",
-    "Override or add AI agent(s) (can specify multiple): universal, claude, or pi"
+    "--agents <agent...>",
+    "Override or add agents (can specify multiple): universal, claude, or pi"
   )
   .option("--dry-run", "Preview changes without applying them")
   .option("--debug", "Show verbose diagnostic output")
@@ -200,7 +200,7 @@ program
   )
   .action(async (options) => {
     await upgradeCommand({
-      ai: options.ai,
+      ai: options.agents,
       dryRun: options.dryRun,
       debug: options.debug,
       githubToken: options.githubToken,
@@ -211,14 +211,14 @@ program
 
 program
   .command("check")
-  .description("Check that all required tools are installed")
+  .description("Check that git and installed agent tools are available")
   .action(() => {
     checkCommand();
   });
 
 program
   .command("graph")
-  .description("Regenerate the codegraph and context index (.engraph/)")
+  .description("Regenerate the codegraph and context index (.engraph/context/_index.yaml)")
   .option("--debug", "Show verbose diagnostic output")
   .option("--consistency-report", "Output consistency report as JSON to stdout")
   .action(async (options) => {

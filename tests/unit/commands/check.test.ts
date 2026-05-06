@@ -67,10 +67,10 @@ describe('checkCommand', () => {
     expect(calls.some((c) => c.includes('git'))).toBe(true);
   });
 
-  it('shows tip when no AI agents found', () => {
+  it('shows tip when no agents found', () => {
     vi.mocked(checkTool).mockReturnValue(false);
     checkCommand();
     const calls = vi.mocked(console.log).mock.calls.map((c) => String(c[0]));
-    expect(calls.some((c) => c.includes('AI agent'))).toBe(true);
+    expect(calls.some((c) => c.includes('agent'))).toBe(true);
   });
 });

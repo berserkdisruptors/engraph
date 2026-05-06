@@ -53,7 +53,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
       if (!AI_CHOICES[ai]) {
         console.log();
         console.log(
-          chalk.red("✗ Invalid AI agent:"),
+          chalk.red("✗ Invalid agent:"),
           ai
         );
         console.log(MINT_COLOR("Valid options:"), Object.keys(AI_CHOICES).join(", "));
@@ -66,7 +66,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     selectedAi = Array.from(new Set([...installedAgents, ...aiArray]));
 
     console.log(
-      MINT_COLOR("AI agent(s) (merged):"),
+      MINT_COLOR("Agents (merged):"),
       selectedAi.join(", ")
     );
   } else {
@@ -74,20 +74,20 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     if (installedAgents.length > 0) {
       console.log(
         MINT_COLOR(
-          `Modify your AI agent(s) (current: ${installedAgents.join(", ")}):`
+          `Modify your agents (current: ${installedAgents.join(", ")}):`
         )
       );
     } else {
       console.log(
         MINT_COLOR(
-          "No AI agent installed. Please select one or more:"
+          "No agent installed. Please select one or more:"
         )
       );
     }
 
     selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
-      "Choose your AI agent(s) (use spacebar to select, enter to confirm):",
+      "Choose your agent(s) (use spacebar to select, enter to confirm):",
       installedAgents
     );
   }

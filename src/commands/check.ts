@@ -52,7 +52,7 @@ export function checkCommand(): void {
 
   if (!agentResults.some(Boolean)) {
     console.log(
-      chalk.dim("Tip: Install an AI agent for the best experience")
+      chalk.dim("Tip: Install an agent for the best experience")
     );
   }
 }
