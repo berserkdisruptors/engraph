@@ -28,7 +28,7 @@ export function createConfigContent(version?: string): string {
  * skills/ folder. A skills/ folder alone is not enough — it must contain at
  * least one engraph skill to be considered an engraph installation.
  * @param projectPath - Path to the project directory
- * @returns Array of agent keys (e.g. ["claude", "cursor"]) with engraph installed
+ * @returns Array of agent keys (e.g. ["universal", "claude"]) with engraph installed
  */
 export function detectInstalledAgents(projectPath: string): string[] {
   return Object.entries(AGENT_FOLDER_MAP)

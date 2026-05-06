@@ -129,7 +129,7 @@ program
   )
   .option(
     "--ai <agent...>",
-    "AI agent(s) to use (can specify multiple): claude, cursor, or opencode"
+    "AI agent(s) to use (can specify multiple): universal, claude, or pi"
   )
   .option(
     "--ignore-agent-tools",
@@ -188,7 +188,7 @@ program
   )
   .option(
     "--ai <agent...>",
-    "Override or add AI agent(s) (can specify multiple): claude, cursor, or opencode"
+    "Override or add AI agent(s) (can specify multiple): universal, claude, or pi"
   )
   .option("--dry-run", "Preview changes without applying them")
   .option("--debug", "Show verbose diagnostic output")
