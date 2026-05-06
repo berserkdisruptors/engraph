@@ -6,10 +6,10 @@ set -euo pipefail
 # Usage: .github/workflows/scripts/create-release-packages.sh <version>
 #   Version argument should include leading 'v'.
 #   Optionally set AGENTS env var to limit what gets built.
-#     AGENTS  : space or comma separated subset of: claude cursor opencode (default: all)
+#     AGENTS  : space or comma separated subset of: universal claude pi (default: all)
 #   Examples:
 #     AGENTS=claude $0 v0.2.0
-#     AGENTS="cursor,opencode" $0 v0.2.0
+#     AGENTS="universal,pi" $0 v0.2.0
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <version-with-v-prefix>" >&2
@@ -83,22 +83,22 @@ build_package() {
     echo "Copied src/context -> .engraph/context"
   fi
   case $agent in
+    universal)
+      if [[ -d src/templates/skills ]]; then
+        mkdir -p "$base_dir/.agents/skills"
+        generate_skills universal "$base_dir/.agents/skills"
+      fi
+      ;;
     claude)
       if [[ -d src/templates/skills ]]; then
         mkdir -p "$base_dir/.claude/skills"
         generate_skills claude "$base_dir/.claude/skills"
       fi
       ;;
-    cursor)
+    pi)
       if [[ -d src/templates/skills ]]; then
-        mkdir -p "$base_dir/.cursor/skills"
-        generate_skills cursor "$base_dir/.cursor/skills"
-      fi
-      ;;
-    opencode)
-      if [[ -d src/templates/skills ]]; then
-        mkdir -p "$base_dir/.opencode/skills"
-        generate_skills opencode "$base_dir/.opencode/skills"
+        mkdir -p "$base_dir/.pi/skills"
+        generate_skills pi "$base_dir/.pi/skills"
       fi
       ;;
   esac
@@ -107,7 +107,7 @@ build_package() {
 }
 
 # Determine agent list
-ALL_AGENTS=(claude cursor opencode)
+ALL_AGENTS=(universal claude pi)
 
 norm_list() {
   # convert comma+space separated -> space separated unique while preserving order of first occurrence
