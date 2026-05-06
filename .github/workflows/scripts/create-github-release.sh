@@ -16,8 +16,8 @@ VERSION="$1"
 VERSION_NO_V=${VERSION#v}
 
 gh release create "$VERSION" \
+  .genreleases/engraph-template-universal-"$VERSION".zip \
   .genreleases/engraph-template-claude-"$VERSION".zip \
-  .genreleases/engraph-template-cursor-"$VERSION".zip \
-  .genreleases/engraph-template-opencode-"$VERSION".zip \
+  .genreleases/engraph-template-pi-"$VERSION".zip \
   --title "Engraph Templates - $VERSION_NO_V" \
   --notes-file release_notes.md
