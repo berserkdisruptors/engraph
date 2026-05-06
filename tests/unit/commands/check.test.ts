@@ -10,6 +10,10 @@ vi.mock('../../../src/utils/index.js', () => ({
   checkTool: vi.fn(),
 }));
 
+vi.mock('../../../src/utils/config.js', () => ({
+  detectInstalledAgents: vi.fn(),
+}));
+
 vi.mock('../../../src/lib/step-tracker.js', () => {
   return {
     StepTracker: class MockStepTracker {
@@ -22,19 +26,27 @@ vi.mock('../../../src/lib/step-tracker.js', () => {
 });
 
 import { checkTool } from '../../../src/utils/index.js';
+import { detectInstalledAgents } from '../../../src/utils/config.js';
 
 describe('checkCommand', () => {
   beforeEach(() => {
     vi.mocked(checkTool).mockReturnValue(false);
+    vi.mocked(detectInstalledAgents).mockReturnValue(['claude', 'pi']);
     vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
-  it('calls checkTool for git, claude, cursor-agent, opencode', () => {
+  it('calls checkTool for git and detected folder agents', () => {
     checkCommand();
     expect(checkTool).toHaveBeenCalledWith('git');
     expect(checkTool).toHaveBeenCalledWith('claude');
-    expect(checkTool).toHaveBeenCalledWith('cursor-agent');
-    expect(checkTool).toHaveBeenCalledWith('opencode');
+    expect(checkTool).toHaveBeenCalledWith('pi');
+  });
+
+  it('only checks folder agents with known binaries', () => {
+    vi.mocked(detectInstalledAgents).mockReturnValue(['universal', 'claude']);
+    checkCommand();
+    expect(checkTool).toHaveBeenCalledWith('claude');
+    expect(checkTool).not.toHaveBeenCalledWith('universal');
   });
 
   it('renders and logs the tracker output', () => {

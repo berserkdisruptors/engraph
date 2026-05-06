@@ -3,10 +3,14 @@ import { showBanner } from "../lib/interactive.js";
 import { TAGLINE, GREEN_COLOR } from "../constants.js";
 import { checkTool } from "../utils/index.js";
 import { StepTracker } from "../lib/step-tracker.js";
+import { detectInstalledAgents } from "../utils/config.js";
 
-/**
- * Check if a tool is installed and update tracker
- */
+/** Folder agents that have a representative CLI binary worth checking */
+const AGENT_TOOL_MAP: Record<string, string> = {
+  claude: "claude",
+  pi: "pi",
+};
+
 function checkToolForTracker(tool: string, tracker: StepTracker): boolean {
   if (checkTool(tool)) {
     tracker.complete(tool, "available");
@@ -17,25 +21,24 @@ function checkToolForTracker(tool: string, tracker: StepTracker): boolean {
   }
 }
 
-/**
- * Check that all required tools are installed
- */
 export function checkCommand(): void {
   showBanner("", TAGLINE);
   console.log(chalk.bold("Checking for installed tools..."));
   console.log();
 
   const tracker = new StepTracker("Check Available Tools");
+  const installedAgents = detectInstalledAgents(process.cwd());
+  const agentsToCheck = installedAgents.filter((a) => a in AGENT_TOOL_MAP);
 
   tracker.add("git", "Git version control");
-  tracker.add("claude", "Claude Code CLI");
-  tracker.add("cursor-agent", "Cursor IDE agent");
-  tracker.add("opencode", "OpenCode CLI");
+  for (const agent of agentsToCheck) {
+    tracker.add(AGENT_TOOL_MAP[agent], `${agent} CLI`);
+  }
 
   const gitOk = checkToolForTracker("git", tracker);
-  const claudeOk = checkToolForTracker("claude", tracker);
-  const cursorOk = checkToolForTracker("cursor-agent", tracker);
-  const opencodeOk = checkToolForTracker("opencode", tracker);
+  const agentResults = agentsToCheck.map((agent) =>
+    checkToolForTracker(AGENT_TOOL_MAP[agent], tracker)
+  );
 
   console.log(tracker.render());
   console.log();
@@ -47,7 +50,7 @@ export function checkCommand(): void {
     console.log(chalk.dim("Tip: Install git for repository management"));
   }
 
-  if (!claudeOk && !cursorOk && !opencodeOk) {
+  if (!agentResults.some(Boolean)) {
     console.log(
       chalk.dim("Tip: Install an AI agent for the best experience")
     );
