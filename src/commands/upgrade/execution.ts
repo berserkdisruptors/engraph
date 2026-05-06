@@ -291,22 +291,6 @@ export async function executeUpgrade(
           await fs.copy(agentsSrc, agentsDest);
         }
 
-        // Replace skills (e.g., .claude/skills/ for Claude Code)
-        const skillsSrc = path.join(sourceDir, agentFolder, "skills");
-        const skillsDest = path.join(projectPath, agentFolder, "skills");
-
-        if (await fs.pathExists(skillsSrc)) {
-          // Backup skills if they exist
-          if (await fs.pathExists(skillsDest)) {
-            await fs.copy(skillsDest, path.join(backupDir, agent, "skills"));
-          }
-
-          // Replace skills
-          await fs.ensureDir(path.dirname(skillsDest));
-          await fs.remove(skillsDest);
-          await fs.copy(skillsSrc, skillsDest);
-        }
-
       }
 
       // Use first agent's source for shared resources
@@ -329,14 +313,15 @@ export async function executeUpgrade(
           if (sourceSkills.length > 0) {
             await fs.ensureDir(skillsDest);
 
+            // Backup the entire skills folder once so rollback can restore all skills,
+            // including any non-engraph skills the user may have installed separately.
+            if (await fs.pathExists(skillsDest)) {
+              await fs.copy(skillsDest, path.join(backupDir, agent, "skills"));
+            }
+
             for (const skillName of sourceSkills) {
               const skillSrcPath = path.join(skillsSrc, skillName);
               const skillDestPath = path.join(skillsDest, skillName);
-
-              // Backup existing skill if it exists
-              if (await fs.pathExists(skillDestPath)) {
-                await fs.copy(skillDestPath, path.join(backupDir, agent, "skills", skillName));
-              }
 
               // Replace the skill
               await fs.remove(skillDestPath);
