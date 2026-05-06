@@ -135,7 +135,7 @@ export function checkAgentTool(
 ): void {
   const agentChecks: Record<string, string> = {
     claude: "https://docs.anthropic.com/en/docs/claude-code/setup",
-    opencode: "https://opencode.ai",
+    pi: "https://pi.ai",
   };
 
   if (agentChecks[selectedAi]) {

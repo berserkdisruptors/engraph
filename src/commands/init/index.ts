@@ -72,7 +72,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
       "Choose your AI agent(s) (use spacebar to select, enter to confirm):",
-      ["claude"]
+      ["universal"]
     );
   }
 
