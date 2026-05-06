@@ -211,13 +211,12 @@ Engraph ships standard skills - plain folders with `SKILL.md` entry points. Any 
 The agents we've explicitly tested:
 
 - **Claude Code**
-- **Cursor**
-- **OpenCode**
 - **Pi**
+- **Agents that follow the universal standard** (`.agents/skills/`) — Amp, Cline, Codex, Cursor, OpenCode, and others
 
 ### Other agents
 
-Anything that supports the skills standard should work. **Gemini CLI**, **Codex CLI**, and **GitHub Copilot** haven't been explicitly tested by us yet. If you've used Engraph with one of these or with another agent that supports skills, [open an issue](https://github.com/berserkdisruptors/engraph/issues) to share what you found, or send a PR adding it to the tested list.
+Anything that reads skills from `.agents/skills/` should work. If you've used Engraph with an agent not listed above, [open an issue](https://github.com/berserkdisruptors/engraph/issues) to share what you found, or send a PR adding it to the tested list.
 
 ---
 
