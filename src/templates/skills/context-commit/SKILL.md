@@ -35,6 +35,8 @@ Run `git diff --cached --stat`.
 - **If staged changes exist:** these are the commit scope. Do not consider unstaged or untracked files — the user has already expressed what belongs in this commit by staging it.
 - **If nothing is staged:** consider all unstaged modifications and untracked files as candidates. Use session context and the diff to decide what to stage and commit.
 
+**Logical grouping:** When multiple files are staged, check that they all belong to the same logical change. If every file is part of one coherent unit of work (a single feature, fix, or refactor), proceed as one commit. If the staged set mixes unrelated concerns — for example, a bug fix alongside an unrelated config cleanup — **stop and ask the user** which files to stage for the first commit before continuing. Never silently merge unrelated changes into one commit.
+
 ### 2. Check Branch History for Existing Context
 
 Run `git log --format="%B" HEAD~10..HEAD` (or since the branch diverged from main) to read action lines already captured in prior commits on this branch.
@@ -54,11 +56,15 @@ Read `.engraph/codegraph/index.yaml` and map each changed file to its module ID.
 
 **Aliases are preferred when available.** Check the `alias` field on each module — if present, use the alias as the scope instead of the path-based module ID. The whole point of aliases is to provide short, developer-friendly code names.
 
+**Scopes must use dashes, never slashes.** A scope is either the module alias (always preferred) or the dashed form of the module ID (e.g. `commands-graph`, not `commands/graph`). Slashes are strictly forbidden in scopes — they break conventional commit parsers and CI tooling. There are no exceptions.
+
 Examples:
-- File `src/commands/graph/scanner.ts` → module `commands/graph` → alias `codegraph` → scope `codegraph`
-- File `src/commands/upgrade/migrations/v2_0.ts` → module `commands/upgrade/migrations` → alias `migrations` → scope `migrations`
-- File `src/utils/config.ts` → module `utils` → no alias → scope `utils`
+- File `src/commands/graph/scanner.ts` → module `commands/graph` → alias `codegraph` → scope `codegraph` ✓
+- File `src/commands/upgrade/migrations/v2_0.ts` → module `commands/upgrade/migrations` → alias `migrations` → scope `migrations` ✓
+- File `src/utils/config.ts` → module `utils` → no alias → scope `utils` ✓
 - File `src/cli.ts` → module `root` → no alias → omit scope from subject line (see below)
+- ❌ `fix(commands/graph): …` — slash in scope, invalid
+- ✓ `fix(codegraph): …` — alias, correct
 
 **If no codegraph exists** (project hasn't run `engraph init`), fall back to human-readable concept labels.
 
@@ -74,6 +80,24 @@ Every `scope()` in action lines must reference a valid alias or module ID from t
 - Collect all scopes you plan to use
 - Verify each one exists as either an `alias` or `id` in the codegraph
 - If a scope doesn't match, find the correct module or use a valid ancestor
+
+### 6. Draft, Present, and Wait for Approval
+
+Write the full commit message (subject + body) and **show it to the user before committing**. This step is mandatory — never run `git commit` without explicit user approval.
+
+Present the draft clearly, e.g.:
+
+```
+Here's the commit message — let me know if you'd like any changes before I commit:
+
+---
+type(scope): subject line
+
+action-type(scope): ...
+---
+```
+
+Wait for the user to confirm or request edits. Only after explicit approval (`looks good`, `go ahead`, `commit it`, or similar) do you execute `git commit`.
 
 ## Commit Format
 
@@ -200,11 +224,14 @@ What you CANNOT infer — do not fabricate:
 3. **Only write action lines that carry signal.** If the diff already explains it, don't repeat it.
 4. **Use lowercase for action line descriptions.** No sentence case.
 5. **Use codegraph aliases as scopes when available.** Fall back to module IDs only when no alias exists.
-6. **Validate all scopes against the codegraph.** Every scope must be a valid alias or module ID.
-7. **Omit `root` scope from the subject line.** Keep it in body action lines for filtering.
-8. **Capture the user's intent in their words.** For `intent` lines, reflect what the human asked for.
-9. **Always explain why for `rejected` lines.** A rejection without a reason is useless.
-10. **Don't invent action lines for trivial commits.** A typo fix or dependency bump needs no action lines.
-11. **Don't fabricate context you don't have.** See "When You Lack Conversation Context" above.
-12. **Don't duplicate reasoning from prior commits.** Check branch history first. Each commit adds new signal to the timeline, not a restated summary.
-13. **Prefer an empty body over noise.** A subject-only commit is a valid contextual commit. Not every change produces reasoning worth capturing.
+6. **Scopes use dashes, never slashes.** `commands-graph` is valid; `commands/graph` is forbidden, no exceptions.
+7. **Validate all scopes against the codegraph.** Every scope must be a valid alias or module ID.
+8. **Omit `root` scope from the subject line.** Keep it in body action lines for filtering.
+9. **Capture the user's intent in their words.** For `intent` lines, reflect what the human asked for.
+10. **Always explain why for `rejected` lines.** A rejection without a reason is useless.
+11. **Don't invent action lines for trivial commits.** A typo fix or dependency bump needs no action lines.
+12. **Don't fabricate context you don't have.** See "When You Lack Conversation Context" above.
+13. **Don't duplicate reasoning from prior commits.** Check branch history first. Each commit adds new signal to the timeline, not a restated summary.
+14. **Prefer an empty body over noise.** A subject-only commit is a valid contextual commit. Not every change produces reasoning worth capturing.
+15. **Check logical grouping before committing.** If staged files span unrelated concerns, stop and ask the user to split before proceeding.
+16. **Always get user approval before committing.** Present the full draft and wait for explicit confirmation. Never run `git commit` without it.
