@@ -54,7 +54,6 @@ export async function executeUpgrade(
     ["extract", isMultiAgent ? "Extract to temporary locations" : "Extract to temporary location"],
     ["backup", "Backup current files"],
     ["replace-skills", "Replace skills"],
-    ["migrate-context", "Migrate context structure"],
     ["codegraph", "Regenerate codegraph"],
     ["update-config", "Update engraph.json"],
     ["cleanup", "Cleanup"],
@@ -260,7 +259,6 @@ export async function executeUpgrade(
         tracker.skip("replace-skills", "no skills in release");
       }
 
-      tracker.skip("migrate-context", "dry-run mode");
       tracker.skip("update-config", "dry-run mode");
       tracker.skip("cleanup", "dry-run mode");
       tracker.complete("final", "preview complete");
@@ -341,12 +339,14 @@ export async function executeUpgrade(
 
       // Migrate context structure using MigrationRunner
       // The runner automatically detects current version and runs all needed migrations
-      tracker.start("migrate-context");
+      // Only show the tracker step when migration actually runs
       try {
         const runner = createMigrationRunner();
         const migrationResult = await runner.run(projectPath, firstSourceDir);
 
         if (migrationResult.migrated) {
+          tracker.add("migrate-context", "Migrate context structure");
+          tracker.start("migrate-context");
           const migratedVersions = migrationResult.appliedMigrations.join(" → ");
           tracker.complete(
             "migrate-context",
@@ -364,14 +364,9 @@ export async function executeUpgrade(
               console.log(chalk.yellow(`  - ${error}`));
             }
           }
-        } else if (migrationResult.alreadyLatest) {
-          tracker.skip("migrate-context", `already at v${migrationResult.toVersion}`);
-        } else {
-          tracker.skip("migrate-context", "no context to migrate");
         }
       } catch (migrationError: any) {
         // Don't fail the upgrade if migration fails - just warn
-        tracker.skip("migrate-context", `error: ${migrationError.message}`);
         if (debug) {
           console.log(chalk.yellow(`\n[DEBUG] Migration error: ${migrationError.message}`));
         }
