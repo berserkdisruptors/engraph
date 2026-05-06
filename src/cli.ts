@@ -159,14 +159,6 @@ program
       "Example: engraph init my-project --local --agents universal"
   )
   .action(async (projectName, options) => {
-    // If no project name and no flags, show help
-    if (!projectName && !options.here && Object.keys(options).length === 0) {
-      // Banner is already registered via program.addHelpText("beforeAll", renderBannerForHelp())
-      // so program.help() will display it automatically
-      program.help();
-      return;
-    }
-
     await initCommand({
       projectName,
       aiAssistant: options.agents,

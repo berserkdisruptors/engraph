@@ -36,11 +36,7 @@ export async function validateProjectSetup(
   }
 
   if (!isHere && !projectName) {
-    console.error(
-      chalk.red("Error:"),
-      "Must specify either a project name, use '.' for current directory, or use --here flag"
-    );
-    process.exit(1);
+    isHere = true;
   }
 
   // Determine project directory
