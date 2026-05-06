@@ -17,7 +17,7 @@ describe('engraph init (e2e)', () => {
 
     const zip = new AdmZip();
     // Add minimal .engraph structure
-    zip.addFile('.engraph/engraph.json', Buffer.from(JSON.stringify({ framework: 'engraph' })));
+    zip.addFile('.engraph/engraph.json', Buffer.from(JSON.stringify({})));
     zip.addFile('.engraph/context/_index.yaml', Buffer.from('version: "1.0"\n'));
     zip.addFile('.engraph/context/structural/_schema.yaml', Buffer.from('type: structural\n'));
     zip.addFile('.engraph/context/conventions/_schema.yaml', Buffer.from('type: convention\n'));
@@ -45,7 +45,7 @@ describe('engraph init (e2e)', () => {
     const projectPath = path.join(tempDir, projectName);
 
     execSync(
-      `node ${CLI_PATH} init ${projectPath} --ai claude --local ${localArtifactsDir} --no-git --ignore-agent-tools`,
+      `node ${CLI_PATH} init ${projectPath} --agents claude --local ${localArtifactsDir} --no-git --ignore-agent-tools`,
       {
         encoding: 'utf8',
         timeout: 30000,
@@ -75,7 +75,7 @@ describe('engraph init (e2e)', () => {
 
     try {
       execSync(
-        `node ${CLI_PATH} init ${projectPath} --ai claude --local ${localArtifactsDir} --no-git --ignore-agent-tools`,
+        `node ${CLI_PATH} init ${projectPath} --agents claude --local ${localArtifactsDir} --no-git --ignore-agent-tools`,
         {
           encoding: 'utf8',
           timeout: 10000,

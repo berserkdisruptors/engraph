@@ -54,7 +54,6 @@ export async function executeUpgrade(
     ["extract", isMultiAgent ? "Extract to temporary locations" : "Extract to temporary location"],
     ["backup", "Backup current files"],
     ["replace-skills", "Replace skills"],
-    ["migrate-context", "Migrate context structure"],
     ["codegraph", "Regenerate codegraph"],
     ["update-config", "Update engraph.json"],
     ["cleanup", "Cleanup"],
@@ -260,7 +259,6 @@ export async function executeUpgrade(
         tracker.skip("replace-skills", "no skills in release");
       }
 
-      tracker.skip("migrate-context", "dry-run mode");
       tracker.skip("update-config", "dry-run mode");
       tracker.skip("cleanup", "dry-run mode");
       tracker.complete("final", "preview complete");
@@ -291,22 +289,6 @@ export async function executeUpgrade(
           await fs.copy(agentsSrc, agentsDest);
         }
 
-        // Replace skills (e.g., .claude/skills/ for Claude Code)
-        const skillsSrc = path.join(sourceDir, agentFolder, "skills");
-        const skillsDest = path.join(projectPath, agentFolder, "skills");
-
-        if (await fs.pathExists(skillsSrc)) {
-          // Backup skills if they exist
-          if (await fs.pathExists(skillsDest)) {
-            await fs.copy(skillsDest, path.join(backupDir, agent, "skills"));
-          }
-
-          // Replace skills
-          await fs.ensureDir(path.dirname(skillsDest));
-          await fs.remove(skillsDest);
-          await fs.copy(skillsSrc, skillsDest);
-        }
-
       }
 
       // Use first agent's source for shared resources
@@ -329,14 +311,15 @@ export async function executeUpgrade(
           if (sourceSkills.length > 0) {
             await fs.ensureDir(skillsDest);
 
+            // Backup the entire skills folder once so rollback can restore all skills,
+            // including any non-engraph skills the user may have installed separately.
+            if (await fs.pathExists(skillsDest)) {
+              await fs.copy(skillsDest, path.join(backupDir, agent, "skills"));
+            }
+
             for (const skillName of sourceSkills) {
               const skillSrcPath = path.join(skillsSrc, skillName);
               const skillDestPath = path.join(skillsDest, skillName);
-
-              // Backup existing skill if it exists
-              if (await fs.pathExists(skillDestPath)) {
-                await fs.copy(skillDestPath, path.join(backupDir, agent, "skills", skillName));
-              }
 
               // Replace the skill
               await fs.remove(skillDestPath);
@@ -356,12 +339,14 @@ export async function executeUpgrade(
 
       // Migrate context structure using MigrationRunner
       // The runner automatically detects current version and runs all needed migrations
-      tracker.start("migrate-context");
+      // Only show the tracker step when migration actually runs
       try {
         const runner = createMigrationRunner();
         const migrationResult = await runner.run(projectPath, firstSourceDir);
 
         if (migrationResult.migrated) {
+          tracker.add("migrate-context", "Migrate context structure");
+          tracker.start("migrate-context");
           const migratedVersions = migrationResult.appliedMigrations.join(" → ");
           tracker.complete(
             "migrate-context",
@@ -379,14 +364,9 @@ export async function executeUpgrade(
               console.log(chalk.yellow(`  - ${error}`));
             }
           }
-        } else if (migrationResult.alreadyLatest) {
-          tracker.skip("migrate-context", `already at v${migrationResult.toVersion}`);
-        } else {
-          tracker.skip("migrate-context", "no context to migrate");
         }
       } catch (migrationError: any) {
         // Don't fail the upgrade if migration fails - just warn
-        tracker.skip("migrate-context", `error: ${migrationError.message}`);
         if (debug) {
           console.log(chalk.yellow(`\n[DEBUG] Migration error: ${migrationError.message}`));
         }
@@ -410,13 +390,11 @@ export async function executeUpgrade(
         }
       }
 
-      // Update engraph.json with version metadata
+      // Update engraph.json with version metadata (also cleans up legacy aiAssistants/framework)
+      // Skip version write for local development runs — preserve the last real release version
       tracker.start("update-config");
-      saveEngraphConfig(projectPath, {
-        aiAssistants: successfulAgents,
-        version: version,
-      });
-      tracker.complete("update-config", `version ${version}`);
+      saveEngraphConfig(projectPath, version !== "local" ? { version } : {});
+      tracker.complete("update-config", version !== "local" ? `version ${version}` : "cleanup only");
 
       // Keep AGENTS.md / CLAUDE.md aligned with Engraph context usage.
       const instructionFiles = await ensureEngraphInstructionFiles(projectPath, {

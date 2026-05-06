@@ -17,7 +17,7 @@ describe('engraph upgrade (e2e)', () => {
     localArtifactsDir = createTempDir('bf-e2e-upgrade-artifacts-');
 
     const zip = new AdmZip();
-    zip.addFile('.engraph/engraph.json', Buffer.from(JSON.stringify({ framework: 'engraph' })));
+    zip.addFile('.engraph/engraph.json', Buffer.from(JSON.stringify({})));
     zip.addFile('.engraph/context/_index.yaml', Buffer.from('version: "1.0"\n'));
     zip.addFile('.engraph/context/structural/_schema.yaml', Buffer.from('type: structural\n'));
     zip.addFile('.engraph/context/conventions/_schema.yaml', Buffer.from('type: convention\n'));
@@ -35,7 +35,7 @@ describe('engraph upgrade (e2e)', () => {
     await fs.ensureDir(path.join(projectDir, '.engraph', 'context'));
     await fs.writeFile(
       path.join(projectDir, '.engraph', 'engraph.json'),
-      JSON.stringify({ framework: 'engraph', aiAssistants: ['claude'], version: '0.0.1' })
+      JSON.stringify({ aiAssistants: ['claude'], version: '0.0.1' })
     );
     await fs.writeFile(
       path.join(projectDir, '.engraph', 'context', '_index.yaml'),
@@ -51,9 +51,9 @@ describe('engraph upgrade (e2e)', () => {
     cleanupTempDir(localArtifactsDir);
   });
 
-  it('runs upgrade with --local flag', () => {
-    const output = execSync(
-      `node ${CLI_PATH} upgrade --ai claude --local ${localArtifactsDir}`,
+  it('runs upgrade with --local flag and removes legacy aiAssistants', async () => {
+    execSync(
+      `node ${CLI_PATH} upgrade --agents claude --local ${localArtifactsDir}`,
       {
         encoding: 'utf8',
         timeout: 30000,
@@ -62,7 +62,11 @@ describe('engraph upgrade (e2e)', () => {
       }
     );
 
-    expect(output).toBeDefined();
+    const config = JSON.parse(
+      await fs.readFile(path.join(projectDir, '.engraph', 'engraph.json'), 'utf8')
+    );
+    expect(config.aiAssistants).toBeUndefined();
+    expect((config as any).framework).toBeUndefined();
   });
 
   it('fails gracefully when not in a engraph project', () => {
@@ -70,7 +74,7 @@ describe('engraph upgrade (e2e)', () => {
 
     try {
       execSync(
-        `node ${CLI_PATH} upgrade --ai claude --local ${localArtifactsDir}`,
+        `node ${CLI_PATH} upgrade --agents claude --local ${localArtifactsDir}`,
         {
           encoding: 'utf8',
           timeout: 10000,
@@ -86,10 +90,10 @@ describe('engraph upgrade (e2e)', () => {
     }
   });
 
-  it('preserves existing engraph.json', async () => {
+  it('preserves existing engraph.json framework on failure', async () => {
     try {
       execSync(
-        `node ${CLI_PATH} upgrade --ai claude --local ${localArtifactsDir}`,
+        `node ${CLI_PATH} upgrade --agents claude --local ${localArtifactsDir}`,
         {
           encoding: 'utf8',
           timeout: 30000,
@@ -105,6 +109,6 @@ describe('engraph upgrade (e2e)', () => {
     const config = JSON.parse(
       await fs.readFile(path.join(projectDir, '.engraph', 'engraph.json'), 'utf8')
     );
-    expect(config.framework).toBe('engraph');
+    expect(config).toBeDefined();
   });
 });

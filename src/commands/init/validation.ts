@@ -117,7 +117,7 @@ export function validateAiAssistant(
   if (!aiChoices[selectedAi]) {
     console.error(
       chalk.red("Error:"),
-      `Invalid AI agent '${selectedAi}'. Choose from: ${Object.keys(
+      `Invalid agent '${selectedAi}'. Choose from: ${Object.keys(
         aiChoices
       ).join(", ")}`
     );
@@ -135,7 +135,7 @@ export function checkAgentTool(
 ): void {
   const agentChecks: Record<string, string> = {
     claude: "https://docs.anthropic.com/en/docs/claude-code/setup",
-    opencode: "https://opencode.ai",
+    pi: "https://pi.ai",
   };
 
   if (agentChecks[selectedAi]) {

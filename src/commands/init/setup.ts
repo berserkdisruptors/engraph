@@ -36,7 +36,7 @@ export async function setupProject(
   // Pre-steps recorded as completed before live rendering
   tracker.add("precheck", "Check required tools");
   tracker.complete("precheck", "ok");
-  tracker.add("ai-select", "Select AI agent(s)");
+  tracker.add("ai-select", "Select agent(s)");
   tracker.complete("ai-select", selectedAi.join(", "));
 
   // Add pending steps (pluralize labels when multiple agents selected)
@@ -193,7 +193,7 @@ export async function setupProject(
     await fs.ensureDir(engraphDir);
 
     const configPath = path.join(engraphDir, "engraph.json");
-    const configContent = createConfigContent(successfulAgents, version);
+    const configContent = createConfigContent(version);
 
     if (debug) {
       console.log(chalk.gray(`\nWriting config to: ${configPath}`));

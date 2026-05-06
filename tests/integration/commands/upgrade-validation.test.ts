@@ -46,7 +46,7 @@ describe('validateUpgradePrerequisites (integration)', () => {
     await fs.ensureDir(path.join(projectDir, '.engraph'));
     await fs.writeFile(
       path.join(projectDir, '.engraph', 'engraph.json'),
-      JSON.stringify({ framework: 'engraph', version: '2.0' })
+      JSON.stringify({ version: '2.0' })
     );
 
     const result = validateUpgradePrerequisites(projectDir);

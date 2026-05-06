@@ -71,8 +71,8 @@ export async function initCommand(options: InitOptions): Promise<void> {
     // Use checkbox multi-select interface
     selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
-      "Choose your AI agent(s) (use spacebar to select, enter to confirm):",
-      ["claude"]
+      "Choose your agent(s) (use spacebar to select, enter to confirm):",
+      ["universal"]
     );
   }
 
@@ -81,7 +81,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     checkAgentTool(selectedAi[0], AI_CHOICES, checkTool);
   }
 
-  console.log(MINT_COLOR("Selected AI agent(s):"), selectedAi.join(", "));
+  console.log(MINT_COLOR("Selected agents:"), selectedAi.join(", "));
   console.log(MINT_COLOR(`(${selectedAi.length} agent${selectedAi.length > 1 ? "s" : ""})`));
   console.log();
 

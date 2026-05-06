@@ -6,14 +6,14 @@ import {
 } from '../../../src/validation/options.js';
 
 describe('validateChoice', () => {
-  const choices = { claude: 'Claude Code', cursor: 'Cursor', opencode: 'OpenCode' };
+  const choices = { universal: 'Universal', claude: 'Claude Code', pi: 'Pi' };
 
   it('returns true for valid choice', () => {
     expect(validateChoice('claude', choices, 'ai')).toBe(true);
   });
 
   it('returns true for another valid choice', () => {
-    expect(validateChoice('cursor', choices, 'ai')).toBe(true);
+    expect(validateChoice('pi', choices, 'ai')).toBe(true);
   });
 
   it('returns false for undefined value', () => {
@@ -22,7 +22,7 @@ describe('validateChoice', () => {
 
   it('throws for invalid choice', () => {
     expect(() => validateChoice('invalid', choices, 'ai')).toThrow(
-      "Invalid ai 'invalid'. Choose from: claude, cursor, opencode"
+      "Invalid ai 'invalid'. Choose from: universal, claude, pi"
     );
   });
 

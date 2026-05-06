@@ -35,8 +35,8 @@ export function isGitRepo(path?: string): boolean {
  * Used by both init and upgrade flows to keep .gitignore in sync.
  */
 const ENGRAPH_GITIGNORE_ENTRIES = [
-  ".engraph/engraph.json",
   ".engraph/codegraph/",
+  ".engraph/context/_index.yaml",
 ];
 
 /**

@@ -5,7 +5,6 @@ description: >-
   grounded in deterministic consistency reports. Presents suggestions for user
   review before persisting. Use to bootstrap a fresh repo's context layer or
   to refresh it as the codebase evolves.
-agents: [claude, cursor, opencode]
 user-invocable: true
 allowed-tools:
   - Read

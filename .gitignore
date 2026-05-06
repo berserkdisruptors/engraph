@@ -17,13 +17,15 @@ dist/
 *.tsbuildinfo
 
 # Engraph
-.engraph/engraph.json
+.engraph/codegraph/
+.engraph/context/_index.yaml
 
 # Agents
 .claude/**
 .cursor/**
 .opencode/**
 .agents/**
+.pi/**
 
 # Release packages
 .genreleases/
@@ -33,5 +35,3 @@ dist/
 
 # Test coverage
 coverage/
-.engraph/codegraph/
-.engraph/context/_index.yaml

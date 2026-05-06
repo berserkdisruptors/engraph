@@ -4,7 +4,7 @@ import path from 'path';
 import { createTempDir, cleanupTempDir } from '../../helpers/temp-dir.js';
 import { validateProjectSetup, validateAiAssistant } from '../../../src/commands/init/validation.js';
 
-const AI_CHOICES = { claude: 'Claude Code', cursor: 'Cursor', opencode: 'OpenCode' };
+const AI_CHOICES = { universal: 'Universal', claude: 'Claude Code', pi: 'Pi' };
 
 describe('validateProjectSetup (integration)', () => {
   let tempDir: string;

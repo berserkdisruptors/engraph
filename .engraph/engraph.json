@@ -1,0 +1,15 @@
+{
+  "version": "v0.0.9",
+  "aliases": {
+    "commands/graph": "codegraph",
+    "commands/upgrade/migrations": "migrations",
+    "context/conventions": "conventions",
+    "context/verification": "verification",
+    "templates/skills": "skills",
+    "templates/skills/context-search": "context-search",
+    "templates/skills/context-verify": "context-verify",
+    "templates/skills/context-add": "context-add",
+    "templates/skills/context-extract": "context-extract",
+    "templates/skills/context-commit": "context-commit"
+  }
+}
