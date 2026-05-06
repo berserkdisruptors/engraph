@@ -124,11 +124,11 @@ describe('config I/O (integration)', () => {
 
     it('detects multiple agents when engraph skills exist in multiple agent folders', async () => {
       await fs.ensureDir(path.join(projectDir, '.claude', 'skills', 'context-commit'));
-      await fs.ensureDir(path.join(projectDir, '.cursor', 'skills', 'context-verify'));
+      await fs.ensureDir(path.join(projectDir, '.pi', 'skills', 'context-verify'));
       const result = detectInstalledAgents(projectDir);
       expect(result).toContain('claude');
-      expect(result).toContain('cursor');
-      expect(result).not.toContain('opencode');
+      expect(result).toContain('pi');
+      expect(result).not.toContain('universal');
     });
   });
 });
