@@ -36,7 +36,7 @@ file_naming:
     examples:
       - "architecture/_schema.yaml"
       - "conventions/_schema.yaml"
-      - "verification/_schema.yaml"
+      - "verifications/_schema.yaml"
     rationale: "Underscore prefix indicates meta-file, not content"
 
   index_files:
@@ -54,13 +54,12 @@ file_naming:
 
 folder_naming:
   context_domains:
-    pattern: "singular-noun"
+    pattern: "plural-noun"
     examples:
-      - "architecture/"
       - "conventions/"
-      - "verification/"
+      - "verifications/"
     location: ".engraph/context/"
-    rationale: "Domain-based organization aligned with context taxonomy"
+    rationale: "Domain-based organization aligned with context taxonomy; plural matches the collection semantics"
 
 variable_naming:
   typescript:
