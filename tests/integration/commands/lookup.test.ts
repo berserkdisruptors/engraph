@@ -28,9 +28,9 @@ describe('lookupModules (integration)', () => {
       })
     );
 
-    // Create context directory with conventions and verification
+    // Create context directory with conventions and verifications
     const convDir = path.join(projectDir, '.engraph', 'context', 'conventions');
-    const verDir = path.join(projectDir, '.engraph', 'context', 'verification');
+    const verDir = path.join(projectDir, '.engraph', 'context', 'verifications');
     await fs.ensureDir(convDir);
     await fs.ensureDir(verDir);
 
@@ -111,9 +111,9 @@ describe('lookupModules (integration)', () => {
           { id: 'auth-patterns', path: 'conventions/auth-patterns.yaml', applies_to_modules: ['auth/*'], provenance: 'manual' },
           { id: 'naming', path: 'conventions/naming.yaml', applies_to_modules: ['*'], provenance: 'manual' },
         ],
-        verification: [
-          { id: 'auth-testing', path: 'verification/auth-testing.yaml', triggered_by_modules: ['auth/*'], provenance: 'manual' },
-          { id: 'code-review', path: 'verification/code-review.yaml', triggered_by_modules: ['*'], provenance: 'manual' },
+        verifications: [
+          { id: 'auth-testing', path: 'verifications/auth-testing.yaml', triggered_by_modules: ['auth/*'], provenance: 'manual' },
+          { id: 'code-review', path: 'verifications/code-review.yaml', triggered_by_modules: ['*'], provenance: 'manual' },
         ],
       })
     );
@@ -136,8 +136,8 @@ describe('lookupModules (integration)', () => {
   it('returns scoped verification for a matching module', async () => {
     const result = await lookupModules(projectDir, ['auth/signup']);
 
-    expect(result.verification).toHaveLength(2);
-    const ids = result.verification.map((v) => v.id).sort();
+    expect(result.verifications).toHaveLength(2);
+    const ids = result.verifications.map((v) => v.id).sort();
     expect(ids).toEqual(['auth-testing', 'code-review']);
   });
 
@@ -196,7 +196,7 @@ describe('lookupModules (integration)', () => {
     try {
       const result = await lookupModules(emptyDir, ['anything']);
       expect(result.conventions).toHaveLength(0);
-      expect(result.verification).toHaveLength(0);
+      expect(result.verifications).toHaveLength(0);
       expect(result.global_conventions).toHaveLength(0);
     } finally {
       cleanupTempDir(emptyDir);

@@ -173,9 +173,12 @@ export async function scanModules(
       const ancestorId = segments.slice(0, i).join("/");
       if (!existingIds.has(ancestorId)) {
         existingIds.add(ancestorId);
-        const ancestorPath = sourceRoots.length > 0
-          ? sourceRoots[0] + "/" + ancestorId
-          : ancestorId;
+        const ancestorPath =
+          ancestorId === "engraph" || ancestorId.startsWith("engraph/")
+            ? "." + ancestorId
+            : sourceRoots.length > 0
+              ? sourceRoots[0] + "/" + ancestorId
+              : ancestorId;
         intermediates.push({
           id: ancestorId,
           path: ancestorPath,
@@ -340,8 +343,14 @@ export async function listAllTrackedFiles(
   const rawFiles = await listRawTrackedFiles(projectPath);
 
   return rawFiles.filter((f) => {
-    // Exclude files under top-level dotfolders
-    if (f.startsWith(".")) return false;
+    // Exclude files under top-level dotfolders, except engraph context directories
+    // which are intentionally version-controlled and need module IDs for aliasing.
+    if (f.startsWith(".")) {
+      const isEngraphContext =
+        f.startsWith(".engraph/context/conventions/") ||
+        f.startsWith(".engraph/context/verifications/");
+      if (!isEngraphContext) return false;
+    }
 
     const ext = path.extname(f).toLowerCase();
     return SOURCE_EXTENSIONS.has(ext) || CONTENT_EXTENSIONS.has(ext);
@@ -367,8 +376,22 @@ async function listRawTrackedFiles(projectPath: string): Promise<string[]> {
     ).trim();
     return output ? output.split("\n") : [];
   } catch {
-    // Not a git repo or git not available — fallback to manual walk
-    return walkDirectory(projectPath, projectPath);
+    // Not a git repo — fallback to manual walk.
+    // walkDirectory skips all dotdirs (including .engraph), so explicitly scan
+    // the engraph context directories that are intentionally version-controlled.
+    const files = await walkDirectory(projectPath, projectPath);
+    for (const ctxDir of ["conventions", "verifications"]) {
+      const fullPath = path.join(projectPath, ".engraph", "context", ctxDir);
+      if (await fs.pathExists(fullPath)) {
+        const entries = await fs.readdir(fullPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isFile()) {
+            files.push(`.engraph/context/${ctxDir}/${entry.name}`);
+          }
+        }
+      }
+    }
+    return files;
   }
 }
 
@@ -469,6 +492,12 @@ export function deriveModuleId(
     return "root";
   }
 
+  // Strip the leading "." from .engraph/ paths so module IDs stay clean:
+  // ".engraph/context/conventions" → "engraph/context/conventions"
+  if (normalized.startsWith(".engraph/")) {
+    return normalized.slice(1);
+  }
+
   return normalized;
 }
 
@@ -494,6 +523,12 @@ function moduleIdToRelativePath(
     if (files.some((f) => f.startsWith(prefix) || path.dirname(f) === rootExact)) {
       return root + "/" + moduleId;
     }
+  }
+
+  // Restore the leading "." for all engraph/ modules so the path field
+  // reflects the actual filesystem location.
+  if (moduleId === "engraph" || moduleId.startsWith("engraph/")) {
+    return "." + moduleId;
   }
 
   // Not under any source root — use the module ID as-is

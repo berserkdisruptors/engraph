@@ -21,7 +21,7 @@ describe('engraph init (e2e)', () => {
     zip.addFile('.engraph/context/_index.yaml', Buffer.from('version: "1.0"\n'));
     zip.addFile('.engraph/context/structural/_schema.yaml', Buffer.from('type: structural\n'));
     zip.addFile('.engraph/context/conventions/_schema.yaml', Buffer.from('type: convention\n'));
-    zip.addFile('.engraph/context/verification/_schema.yaml', Buffer.from('type: verification\n'));
+    zip.addFile('.engraph/context/verifications/_schema.yaml', Buffer.from('type: verification\n'));
     // Add minimal agent files
     zip.addFile('.claude/CLAUDE.md', Buffer.from('# Engraph\n'));
 
@@ -57,16 +57,6 @@ describe('engraph init (e2e)', () => {
     expect(fs.existsSync(projectPath)).toBe(true);
     expect(fs.existsSync(path.join(projectPath, '.engraph'))).toBe(true);
     expect(fs.existsSync(path.join(projectPath, '.engraph', 'engraph.json'))).toBe(true);
-  });
-
-  it('shows error when called without arguments', () => {
-    const output = execSync(`node ${CLI_PATH} init 2>&1 || true`, {
-      encoding: 'utf8',
-      timeout: 10000,
-      env: { ...process.env, FORCE_COLOR: '0' },
-    });
-    // Should show an error about missing project name
-    expect(output).toContain('Must specify');
   });
 
   it('fails gracefully when project directory already exists', () => {

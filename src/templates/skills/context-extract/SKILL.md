@@ -43,11 +43,11 @@ Also read `.engraph/codegraph/index.yaml` for the module inventory (IDs, aliases
 
 ## Step 2: Load Existing Context
 
-Read all YAML files in `.engraph/context/conventions/` and `.engraph/context/verification/` (excluding `_schema.yaml` files). These are already-covered patterns.
+Read all YAML files in `.engraph/context/conventions/` and `.engraph/context/verifications/` (excluding `_schema.yaml` files). These are already-covered patterns.
 
 Also read the schemas for reference:
 - `.engraph/context/conventions/_schema.yaml` — convention file structure
-- `.engraph/context/verification/_schema.yaml` — verification file structure
+- `.engraph/context/verifications/_schema.yaml` — verification file structure
 
 If no existing context files exist, this is a cold start — all suggestions are candidates.
 
@@ -199,7 +199,7 @@ reference_files:
   - "{path to a real file demonstrating this convention}"
 ```
 
-**Verification files** → `.engraph/context/verification/{id}.yaml`:
+**Verification files** → `.engraph/context/verifications/{id}.yaml`:
 
 ```yaml
 id: {kebab-case-id}

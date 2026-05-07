@@ -65,7 +65,7 @@ describe("checkBridgeReferences", () => {
     const file = makeFile(
       "verification",
       ["missing"],
-      "verification/test.yaml"
+      "verifications/test.yaml"
     );
     const findings = checkBridgeReferences([file], aliasMap);
     expect(findings).toHaveLength(1);

@@ -2,9 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { getDefaultConfig, createConfigContent, detectInstalledAgents } from '../../../src/utils/config.js';
 
 describe('getDefaultConfig', () => {
-  it('returns empty object', () => {
+  it('includes prepopulated engraph context aliases', () => {
     const config = getDefaultConfig();
-    expect(config).toEqual({});
+    expect(config.aliases).toEqual({
+      'engraph/context/conventions': 'conventions',
+      'engraph/context/verifications': 'verifications',
+    });
   });
 
   it('returns a new object each call', () => {
@@ -16,10 +19,12 @@ describe('getDefaultConfig', () => {
 });
 
 describe('createConfigContent', () => {
-  it('returns empty JSON object when no args', () => {
+  it('includes engraph context aliases when no version arg', () => {
     const content = createConfigContent();
     const parsed = JSON.parse(content);
-    expect(parsed).toEqual({});
+    expect(parsed.aliases).toBeDefined();
+    expect(parsed.aliases['engraph/context/conventions']).toBe('conventions');
+    expect(parsed.aliases['engraph/context/verifications']).toBe('verifications');
   });
 
   it('includes version when provided', () => {
