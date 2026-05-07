@@ -173,11 +173,12 @@ export async function scanModules(
       const ancestorId = segments.slice(0, i).join("/");
       if (!existingIds.has(ancestorId)) {
         existingIds.add(ancestorId);
-        const ancestorPath = ancestorId.startsWith("engraph/context")
-          ? "." + ancestorId
-          : sourceRoots.length > 0
-            ? sourceRoots[0] + "/" + ancestorId
-            : ancestorId;
+        const ancestorPath =
+          ancestorId === "engraph" || ancestorId.startsWith("engraph/")
+            ? "." + ancestorId
+            : sourceRoots.length > 0
+              ? sourceRoots[0] + "/" + ancestorId
+              : ancestorId;
         intermediates.push({
           id: ancestorId,
           path: ancestorPath,
@@ -524,9 +525,9 @@ function moduleIdToRelativePath(
     }
   }
 
-  // Restore the leading "." for engraph context modules so the path field
+  // Restore the leading "." for all engraph/ modules so the path field
   // reflects the actual filesystem location.
-  if (moduleId.startsWith("engraph/context/")) {
+  if (moduleId === "engraph" || moduleId.startsWith("engraph/")) {
     return "." + moduleId;
   }
 
