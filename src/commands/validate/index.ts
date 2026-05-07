@@ -80,7 +80,7 @@ async function loadContextFiles(
 ): Promise<ParsedContextFile[]> {
   const files: ParsedContextFile[] = [];
 
-  for (const domain of ["conventions", "verification"]) {
+  for (const domain of ["conventions", "verifications"]) {
     const domainDir = path.join(contextDir, domain);
     if (!(await fs.pathExists(domainDir))) continue;
 

@@ -13,7 +13,7 @@ export interface LookupEntry {
 export interface LookupResult {
   query_modules: string[];
   conventions: LookupEntry[];
-  verification: LookupEntry[];
+  verifications: LookupEntry[];
   global_conventions: LookupEntry[];
 }
 
@@ -48,7 +48,7 @@ export async function lookupModules(
 
   const conventions: LookupEntry[] = [];
   const globalConventions: LookupEntry[] = [];
-  const verification: LookupEntry[] = [];
+  const verifications: LookupEntry[] = [];
 
   // Filter conventions
   for (const entry of index.conventions) {
@@ -69,8 +69,8 @@ export async function lookupModules(
     }
   }
 
-  // Filter verification
-  for (const entry of index.verification) {
+  // Filter verifications
+  for (const entry of index.verifications) {
     const modules = entry.triggered_by_modules ?? ["*"];
     const matches =
       (modules.length === 1 && modules[0] === "*") ||
@@ -79,7 +79,7 @@ export async function lookupModules(
     if (matches) {
       const content = await readDefinitionFile(contextDir, entry.path);
       if (content) {
-        verification.push({ id: entry.id, path: entry.path, content });
+        verifications.push({ id: entry.id, path: entry.path, content });
       }
     }
   }
@@ -87,14 +87,14 @@ export async function lookupModules(
   if (debug) {
     console.log(
       `[lookup] found ${conventions.length} conventions, ` +
-        `${globalConventions.length} global, ${verification.length} verification`
+        `${globalConventions.length} global, ${verifications.length} verifications`
     );
   }
 
   return {
     query_modules: resolvedModules,
     conventions,
-    verification,
+    verifications,
     global_conventions: globalConventions,
   };
 }
@@ -117,7 +117,7 @@ interface IndexVerificationEntry {
 
 interface ContextIndex {
   conventions: IndexConventionEntry[];
-  verification: IndexVerificationEntry[];
+  verifications: IndexVerificationEntry[];
 }
 
 /**
@@ -134,10 +134,10 @@ async function loadIndex(
     try {
       const content = await fs.readFile(indexPath, "utf8");
       const parsed = parse(content);
-      if (parsed?.conventions && parsed?.verification) {
+      if (parsed?.conventions && parsed?.verifications) {
         return {
           conventions: parsed.conventions ?? [],
-          verification: parsed.verification ?? [],
+          verifications: parsed.verifications ?? [],
         };
       }
     } catch {
@@ -162,7 +162,7 @@ async function loadIndex(
  */
 async function scanAllFiles(contextDir: string): Promise<ContextIndex> {
   const conventions: IndexConventionEntry[] = [];
-  const verification: IndexVerificationEntry[] = [];
+  const verifications: IndexVerificationEntry[] = [];
 
   const convDir = path.join(contextDir, "conventions");
   if (await fs.pathExists(convDir)) {
@@ -187,7 +187,7 @@ async function scanAllFiles(contextDir: string): Promise<ContextIndex> {
     }
   }
 
-  const verDir = path.join(contextDir, "verification");
+  const verDir = path.join(contextDir, "verifications");
   if (await fs.pathExists(verDir)) {
     const files = (await fs.readdir(verDir)).filter(
       (f) => f.endsWith(".yaml") && f !== "_schema.yaml"
@@ -197,9 +197,9 @@ async function scanAllFiles(contextDir: string): Promise<ContextIndex> {
         const content = await fs.readFile(path.join(verDir, file), "utf8");
         const parsed = parse(content);
         if (parsed?.id) {
-          verification.push({
+          verifications.push({
             id: parsed.id,
-            path: `verification/${file}`,
+            path: `verifications/${file}`,
             triggered_by_modules: parsed.triggered_by_modules ?? ["*"],
             provenance: parsed.provenance ?? "manual",
           });
@@ -210,7 +210,7 @@ async function scanAllFiles(contextDir: string): Promise<ContextIndex> {
     }
   }
 
-  return { conventions, verification };
+  return { conventions, verifications };
 }
 
 /**

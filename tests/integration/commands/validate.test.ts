@@ -422,7 +422,7 @@ describe("validateCommand (integration)", () => {
           projectDir,
           ".engraph",
           "context",
-          "verification",
+          "verifications",
           "broken-risk-module.yaml"
         );
         const content = parse(await fs.readFile(verPath, "utf8"));
@@ -517,7 +517,7 @@ describe("validateCommand (integration)", () => {
       it("--fix on valid project leaves all files byte-identical", async () => {
         projectDir = await useFixture("valid-project");
         const convDir = path.join(projectDir, ".engraph", "context", "conventions");
-        const verDir = path.join(projectDir, ".engraph", "context", "verification");
+        const verDir = path.join(projectDir, ".engraph", "context", "verifications");
 
         // Read all files before
         const filesBefore = new Map<string, string>();

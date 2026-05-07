@@ -3,8 +3,8 @@
   "aliases": {
     "commands/graph": "codegraph",
     "commands/upgrade/migrations": "migrations",
-    "context/conventions": "conventions",
-    "context/verification": "verification",
+    "engraph/context/conventions": "conventions",
+    "engraph/context/verifications": "verifications",
     "templates/skills": "skills",
     "templates/skills/context-search": "context-search",
     "templates/skills/context-verify": "context-verify",

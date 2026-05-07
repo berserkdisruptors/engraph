@@ -25,13 +25,13 @@ interface ContextIndex {
   generated_at: string;
   codegraph_hash: string;
   conventions: ConventionEntry[];
-  verification: VerificationEntry[];
+  verifications: VerificationEntry[];
 }
 
 const INDEX_HEADER = [
   "# Engraph Context Index — Routing Table",
   "# Regenerated deterministically by `engraph graph`.",
-  "# Source of truth: individual convention/verification YAML files.",
+  "# Source of truth: individual convention/verification YAML files in conventions/ and verifications/.",
   "# If this file drifts or is missing, regenerate with `engraph graph`.",
   "",
 ].join("\n");
@@ -65,15 +65,15 @@ export async function regenerateContextIndex(
     debug
   );
 
-  const verification = await scanDomain<VerificationEntry>(
-    path.join(contextDir, "verification"),
+  const verifications = await scanDomain<VerificationEntry>(
+    path.join(contextDir, "verifications"),
     "triggered_by_modules",
     debug
   );
 
   // Check for duplicate IDs across both domains
   const allIds = new Set<string>();
-  for (const entry of [...conventions, ...verification]) {
+  for (const entry of [...conventions, ...verifications]) {
     if (allIds.has(entry.id)) {
       console.warn(`[context-index] warning: duplicate id "${entry.id}"`);
     }
@@ -85,7 +85,7 @@ export async function regenerateContextIndex(
     generated_at: new Date().toISOString(),
     codegraph_hash: codegraphHash,
     conventions,
-    verification,
+    verifications,
   };
 
   const yamlContent = stringify(index, {
@@ -100,7 +100,7 @@ export async function regenerateContextIndex(
   if (debug) {
     console.log(
       `[context-index] written to .engraph/context/_index.yaml ` +
-        `(${conventions.length} conventions, ${verification.length} verification)`
+        `(${conventions.length} conventions, ${verifications.length} verifications)`
     );
   }
 }

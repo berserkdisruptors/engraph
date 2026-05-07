@@ -73,7 +73,7 @@ You can also use aliases instead of full module IDs (e.g., `codegraph` instead o
 
 This returns JSON with:
 - **lookup.conventions** — conventions scoped to those modules
-- **lookup.verification** — verification procedures triggered by those modules
+- **lookup.verifications** — verification procedures triggered by those modules
 - **lookup.global_conventions** — conventions that apply to all modules (`*`)
 - **recall.commits** — contextual commit history with decisions, rejections, constraints, and learnings
 

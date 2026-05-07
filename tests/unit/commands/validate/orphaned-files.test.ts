@@ -19,7 +19,7 @@ function makeFile(
     type === "verification" ? "triggered_by_modules" : "applies_to_modules";
   return {
     filePath: "/tmp/test.yaml",
-    relativePath: `${type === "verification" ? "verification" : "conventions"}/test.yaml`,
+    relativePath: `${type === "verification" ? "verifications" : "conventions"}/test.yaml`,
     content: { type, [fieldName]: modules },
   };
 }

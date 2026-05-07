@@ -7,7 +7,12 @@ import { AGENT_FOLDER_MAP, ENGRAPH_SKILL_NAMES } from "../config/agents.js";
  * Get the default Engraph configuration
  */
 export function getDefaultConfig(): EngraphConfig {
-  return {};
+  return {
+    aliases: {
+      "engraph/context/conventions": "conventions",
+      "engraph/context/verifications": "verifications",
+    },
+  };
 }
 
 /**

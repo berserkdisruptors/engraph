@@ -38,7 +38,7 @@ export async function searchModules(
     query_modules: lookupResult.query_modules,
     lookup: {
       conventions: lookupResult.conventions,
-      verification: lookupResult.verification,
+      verifications: lookupResult.verifications,
       global_conventions: lookupResult.global_conventions,
     },
     recall: {
