@@ -92,7 +92,7 @@ enforcement_mechanism:
 reference_files:
   - .engraph/context/_index.yaml
   - src/context/conventions/_schema.yaml
-  - src/context/verification/_schema.yaml
+  - src/context/verifications/_schema.yaml
 migration_guide: |
   If you encounter legacy .yml files:
   1. Use `git mv old-file.yml new-file.yaml` to preserve history
