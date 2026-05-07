@@ -58,10 +58,11 @@ describe('validateProjectSetup (integration)', () => {
     ).rejects.toThrow('process.exit(1)');
   });
 
-  it('exits when neither project name nor --here provided', async () => {
-    await expect(
-      validateProjectSetup(undefined, false)
-    ).rejects.toThrow('process.exit(1)');
+  it('defaults to current directory when neither project name nor --here provided', async () => {
+    process.chdir(tempDir);
+    const result = await validateProjectSetup(undefined, false);
+    expect(result.isHere).toBe(true);
+    expect(result.projectPath).toBe(tempDir);
   });
 
   it('warns and continues with --force when .engraph exists', async () => {
