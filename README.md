@@ -253,6 +253,7 @@ Tried Engraph with an agent that's not on the tested list? See [AI Agent Compati
 - **npm Package**: [https://www.npmjs.com/package/engraph](https://www.npmjs.com/package/engraph)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/engraph/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/engraph/discussions)
+- **Reach Us**: [hi@buildforce.dev](mailto:hi@buildforce.dev)
 
 ---
 
