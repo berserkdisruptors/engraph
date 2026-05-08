@@ -36,20 +36,40 @@ engraph graph
 
 The user deliberately staged these files before calling the skill. They are the entire scope of this commit. Do not look at unstaged or untracked files. After committing the invocation snapshot, **stop** — do not proceed to commit anything else.
 
-#### Path B — nothing was staged at invocation
+#### Path B — nothing was staged, unstaged changes exist
 
-The user wants to commit their full session's work. Run `git status` and `git diff` to get the complete picture of all unstaged modifications and untracked files.
+Run `git status --short`. If it returns output, the user wants to commit their full session's work. Run `git diff` to get the complete picture of all unstaged modifications and untracked files. If `git status --short` returns nothing, skip to Path C.
 
 **Group by logical unit.** Examine the full diff and determine whether all changes belong to the same logical change (one feature, fix, or refactor) or span multiple unrelated concerns.
 
 - **One logical unit:** stage everything, commit it as one, done.
 - **Multiple logical units:** identify the groups. For each group in sequence: present the proposed staging to the user, wait for approval, stage those files, write the commit draft, wait for approval again, then commit. Repeat until all groups are committed. Never silently bundle unrelated changes into one commit.
 
+#### Path C — nothing staged, nothing unstaged
+
+The working tree is completely clean. The user wants to record reasoning without any code change. Confirm with `git status --short` returning empty output.
+
+**Valid scenarios:**
+
+1. **Planning commit** — capture intent, decisions, and scope before writing code. Use `chore(scope): add plan reasoning` as the subject, where scope is the real codegraph module the plan applies to (e.g. `chore(migrations): add plan reasoning`). Omit scope if the plan is cross-cutting. Future sessions read this reasoning via `engraph recall`.
+
+2. **Retrospective capture** — reasoning that emerged after a commit was already written but the session is still live. Subject: `chore(scope): retrospective capture`. A standalone empty commit preserves it in the timeline without touching any file.
+
+3. **Rejected-approach capture** — something was considered and abandoned before any code was written. Subject: `chore(scope): add rejected reasoning`. `rejected(scope): ...` lines in the body record it so future sessions don't re-propose the same path.
+
+4. **Correction commit** — a prior commit's body contained wrong or incomplete reasoning, and history rewrite is not viable (already pushed, shared branch). Subject: `chore(scope): add correction` (or omit scope if cross-cutting). An empty commit with correcting action lines updates the record. If the prior commit said `decision(db): pg-vector chosen...`, the correction carries `rejected(db): pg-vector — reason` and `decision(db): new approach`, so that `engraph recall` reads the full evolution: chosen → rejected → corrected decision. The temporal sequence is the record.
+
+**If no arguments were passed and there is no preceding conversation context, stop.** There is nothing to capture. Inform the user: "Nothing staged and no context to record — if you meant to capture something, share it and I'll write the commit." Do not fabricate action lines.
+
+Use `git commit --allow-empty` when executing. Write only what is evidenced in conversation context — no fabrication. The same user approval gate (Step 6) applies.
+
+---
+
 ### 2. Check Branch History for Existing Context
 
 Run `git log --format="%B" HEAD~10..HEAD` (or since the branch diverged from main) to read action lines already captured in prior commits on this branch.
 
-**Do not repeat reasoning that is already persisted.** Plan commits (`docs(plan): ...`) and earlier implementation commits may already capture intent, decisions, rejected alternatives, and constraints. Your commit should only carry:
+**Do not repeat reasoning that is already persisted.** Plan commits (`chore(scope): add plan reasoning`) and earlier implementation commits may already capture intent, decisions, rejected alternatives, and constraints. Your commit should only carry:
 - **New reasoning** that emerged during this specific implementation work
 - **Refinements** to prior decisions (e.g., a decision changed during implementation)
 - **Implementation-specific learnings** discovered while writing the code
@@ -244,3 +264,4 @@ What you CANNOT infer — do not fabricate:
 15. **The invocation snapshot is the fixed scope for Path A.** Record what was staged when the skill was called; never re-check mid-workflow. Files staged by the agent during the run are not user-staged and do not extend Path A scope. Stop after committing the snapshot.
 16. **Path B requires logical grouping before staging anything.** Analyse the full unstaged diff first, group by logical unit, then stage and commit each group separately with user approval at each step.
 17. **Always get user approval before committing.** Present the full draft and wait for explicit confirmation. Never run `git commit` without it.
+18. **Path C requires `--allow-empty`.** When the working tree is clean, always use `git commit --allow-empty`. Correction commits update the reasoning record in place — prefer them over `--amend` once commits are pushed or shared.
