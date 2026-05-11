@@ -60,16 +60,30 @@ export function displayNextSteps(
   // Project Ready details
   const projectReadyLines = [
     `The ${MINT_COLOR(
-      ".engraph"
-    )} directory is created and will store your context repository:`,
+      ".engraph/"
+    )} directory is created and will store your context files and engraph configuration.`,
     "",
     `${MINT_COLOR(
       ".engraph/context/"
-    )} - Accumulated project context from past coding sessions`,
+    )} - YAML files for conventions and verification procedures`,
+    "",
+    `${MINT_COLOR(
+      ".engraph/context/index.yaml"
+    )} - Auto-generated routing table for conventions and verification procedures`,
+    "",
+    `${MINT_COLOR(
+      ".engraph/codegraph/"
+    )} - Auto-generated YAML files for the codebase structural map`,
+    "",
+    `${MINT_COLOR(
+      ".engraph/engraph.json"
+    )} - Engraph configuration file`,
     "",
     `${MINT_COLOR(
       "IMPORTANT:"
-    )} The .engraph directory is version-controlled and will be used to track your context repository.`,
+    )} Most of the files in the ${MINT_COLOR(
+      ".engraph/"
+    )} directory are version-controlled. The auto-generated folders and files are intentionally ignored by git.`,
   ];
 
   console.log();

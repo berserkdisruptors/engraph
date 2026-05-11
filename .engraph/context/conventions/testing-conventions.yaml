@@ -10,7 +10,7 @@ created: "2026-02-20"
 last_updated: "2026-02-20"
 
 description: |
-  Conventions for writing and organizing tests in the Buildforce CLI project.
+  Conventions for writing and organizing tests in the Engraph CLI project.
   The project uses vitest v4 with a three-tier test strategy: unit, integration,
   and e2e. Tests must follow specific patterns for each tier and use shared
   helper utilities for test isolation and fixture creation.
@@ -57,7 +57,6 @@ reference_files:
   - tests/setup.ts
   - tests/helpers/temp-dir.ts
   - tests/helpers/fixtures.ts
-  - tests/helpers/yaml-builders.ts
   - tests/e2e/init.test.ts
 rules:
   directory_structure: |
@@ -96,11 +95,7 @@ rules:
     - createTempDir(prefix): Creates isolated temp dir with real path resolution
     - cleanupTempDir(path): Best-effort recursive removal
     - createAgentTemplate(opts): Builds agent template with frontmatter
-    - createBuildforceConfig(overrides): Builds minimal config object
-    - createV1IndexYaml(entries): Builds v1.0 _index.yaml for migration tests
-    - createV2IndexYaml(): Builds v2.0 _index.yaml
-    - createDomainIndexYaml(entries): Builds domain _index.yaml
-    - createGuidelinesYaml(sections): Builds _guidelines.yaml for migration tests
+    - createEngraphConfig(overrides): Builds minimal config object
   process_exit_handling: |
     Global setup (tests/setup.ts) mocks process.exit() to throw an Error
     with message "process.exit(CODE)". Tests that expect exit behavior should:

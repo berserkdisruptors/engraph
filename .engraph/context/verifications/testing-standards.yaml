@@ -126,7 +126,7 @@ test_execution:
       the test runner. Tests expecting process.exit can catch the known error.
     helpers:
       - "tests/helpers/temp-dir.ts: createTempDir() / cleanupTempDir() for test isolation"
-      - "tests/helpers/fixtures.ts: createAgentTemplate() / createBuildforceConfig() builders"
+      - "tests/helpers/fixtures.ts: createAgentTemplate() / createEngraphConfig() builders"
       - "tests/helpers/yaml-builders.ts: createV1IndexYaml() / createV2IndexYaml() / createDomainIndexYaml() / createGuidelinesYaml()"
     ci_matrix: "Node.js 18, 20, 22 — coverage runs on Node.js 20 only"
 

@@ -10,7 +10,7 @@ created: "2026-02-19"
 last_updated: "2026-02-20"
 
 description: |
-  Comprehensive conventions for creating Buildforce skills. Skills are Markdown-based
+  Comprehensive conventions for creating Engraph skills. Skills are Markdown-based
   instruction files that define reusable AI agent capabilities. They live in
   src/templates/skills/{skill-name}/ as directories containing a SKILL.md file
   (with optional assets). Skills are distributed to all three supported agents
@@ -63,7 +63,7 @@ examples:
       ---
       name: context-search
       description: >-
-        Search the Buildforce context repository for curated codebase knowledge...
+        Search the Engraph context repository for curated codebase knowledge...
       agents: [claude, cursor, opencode]
       ---
 
@@ -291,7 +291,7 @@ existing_skills_inventory: >
      - Purpose: Add new knowledge to context repository
      - Agents: [claude, cursor, opencode]
      - Assets: none
-     - Features: Domain classification, codebase grounding, _index.yaml update
+     - Features: Domain classification, codebase grounding
      - Frontmatter: user-invocable: true, context: fork, allowed-tools without Task
 
   4. context-verify
