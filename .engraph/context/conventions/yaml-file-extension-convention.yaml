@@ -90,7 +90,7 @@ enforcement_mechanism:
     # Check for violations in source directories
     find src .engraph -name "*.yml" -not -path "*/node_modules/*" 2>/dev/null
 reference_files:
-  - .engraph/context/_index.yaml
+  - .engraph/context/index.yaml
   - src/context/conventions/_schema.yaml
   - src/context/verifications/_schema.yaml
 migration_guide: |

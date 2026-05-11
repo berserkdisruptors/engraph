@@ -37,7 +37,7 @@ const INDEX_HEADER = [
 ].join("\n");
 
 /**
- * Regenerate `.engraph/context/_index.yaml` from convention/verification files.
+ * Regenerate `.engraph/context/index.yaml` from convention/verification files.
  *
  * Reads bridge fields from individual YAML files and produces a routing table
  * that the `lookup` command uses for fast module-scoped queries.
@@ -94,12 +94,12 @@ export async function regenerateContextIndex(
     defaultStringType: "PLAIN",
   });
 
-  const indexPath = path.join(contextDir, "_index.yaml");
+  const indexPath = path.join(contextDir, "index.yaml");
   await fs.writeFile(indexPath, INDEX_HEADER + yamlContent, "utf8");
 
   if (debug) {
     console.log(
-      `[context-index] written to .engraph/context/_index.yaml ` +
+      `[context-index] written to .engraph/context/index.yaml ` +
         `(${conventions.length} conventions, ${verifications.length} verifications)`
     );
   }

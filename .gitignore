@@ -18,7 +18,7 @@ dist/
 
 # Engraph
 .engraph/codegraph/
-.engraph/context/_index.yaml
+.engraph/context/index.yaml
 
 # Agents
 .claude/**

@@ -31,7 +31,7 @@ export interface MigrationRunnerResult {
  * Example flow:
  * - User on v1.0, migrations available: [v2.0, v2.1, v3.0]
  * - Runner detects v1.0, runs v2.0, v2.1, v3.0 in order
- * - Each migration updates _index.yaml version field
+ * - Each migration updates index.yaml version field
  */
 export class MigrationRunner {
   private migrations: Migration[] = [];

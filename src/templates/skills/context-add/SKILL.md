@@ -161,7 +161,7 @@ Run `engraph graph` to regenerate the context index with the new file:
 engraph graph
 ```
 
-This picks up the new file's bridge fields and adds it to `_index.yaml` automatically.
+This picks up the new file's bridge fields and adds it to `index.yaml` automatically.
 
 ---
 

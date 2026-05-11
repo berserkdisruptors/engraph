@@ -210,7 +210,7 @@ program
 
 program
   .command("graph")
-  .description("Regenerate the codegraph and context index (.engraph/context/_index.yaml)")
+  .description("Regenerate the codegraph and context index (.engraph/context/index.yaml)")
   .option("--debug", "Show verbose diagnostic output")
   .option("--consistency-report", "Output consistency report as JSON to stdout")
   .action(async (options) => {

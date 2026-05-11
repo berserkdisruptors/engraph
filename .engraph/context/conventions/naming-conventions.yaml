@@ -40,9 +40,9 @@ file_naming:
     rationale: "Underscore prefix indicates meta-file, not content"
 
   index_files:
-    pattern: "_index.yaml (underscore prefix)"
-    location: ".engraph/context/_index.yaml"
-    rationale: "Single unified index for all domains; underscore indicates meta-file"
+    pattern: "index.yaml"
+    location: ".engraph/context/index.yaml"
+    rationale: "Single unified index for all domains; no underscore prefix unlike schema files"
 
   skill_files:
     pattern: "SKILL.md in kebab-case directory"
@@ -75,7 +75,6 @@ variable_naming:
     pattern: "UPPER_SNAKE_CASE"
     examples:
       - "SPEC_DIR"
-      - "BUILDFORCE_ROOT"
       - "FEATURE_DIR"
       - "FOLDER_NAME"
     applies_to: "All bash script variables"
@@ -94,7 +93,7 @@ identifier_naming:
       - "slash-commands"
       - "template-only-slash-commands"
       - "context-repository-pattern"
-    used_in: "_index.yaml items, context file id field"
+    used_in: "index.yaml items, context file id field"
 
   requirement_ids:
     pattern: "PREFIX + sequential number"

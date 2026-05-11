@@ -71,7 +71,7 @@ export async function generateCodegraph(
     console.log(`[codegraph] written to .engraph/codegraph/index.yaml`);
   }
 
-  // Regenerate context index (.engraph/context/_index.yaml)
+  // Regenerate context index (.engraph/context/index.yaml)
   const codegraphIndexPath = path.join(projectPath, ".engraph", "codegraph", "index.yaml");
   const codegraphContent = await fs.readFile(codegraphIndexPath, "utf8");
   const codegraphHash = createHash("sha256").update(codegraphContent).digest("hex").slice(0, 12);

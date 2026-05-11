@@ -36,7 +36,7 @@ export function isGitRepo(path?: string): boolean {
  */
 const ENGRAPH_GITIGNORE_ENTRIES = [
   ".engraph/codegraph/",
-  ".engraph/context/_index.yaml",
+  ".engraph/context/index.yaml",
 ];
 
 /**

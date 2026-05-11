@@ -17,7 +17,7 @@ description: |
   KEY PRINCIPLES:
   - Forward-only: No rollback support. If a migration fails, fix issues and retry.
   - Idempotent: Migrations check preconditions (version, folder existence) before acting.
-  - Sequential: Migrations run in version order, each updating _index.yaml version field.
+  - Sequential: Migrations run in version order, each updating _schema.yaml version field.
   - Self-describing: Each migration has version and description fields.
 
 file_naming:
@@ -133,7 +133,7 @@ forward_only_pattern:
     - Template copying from source ensures fresh schema files
   implementation: |
     // Migrations copy from template, not restore from backup
-    const templatePath = path.join(templateSourceDir, ".engraph", "context", "_index.yaml");
+    const templatePath = path.join(templateSourceDir, ".engraph", "context", "index.yaml");
     if (await fs.pathExists(templatePath)) {
       await fs.copy(templatePath, rootIndexPath);
     }

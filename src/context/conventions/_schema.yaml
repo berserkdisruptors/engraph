@@ -34,7 +34,7 @@ optional_fields:
 # Field definitions
 
 id:
-  description: "Unique identifier for this convention (used in _index.yaml)"
+  description: "Unique identifier for this convention (used in index.yaml)"
   format: "kebab-case"
   example: "repository-pattern"
 

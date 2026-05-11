@@ -24,7 +24,7 @@ export interface LookupOptions {
 /**
  * Look up conventions and verification rules for given module IDs.
  *
- * Reads the context index (_index.yaml) to determine which definition files
+ * Reads the context index (index.yaml) to determine which definition files
  * to load, then filters by bridge field glob matching against the query modules.
  */
 export async function lookupModules(
@@ -128,7 +128,7 @@ async function loadIndex(
   contextDir: string,
   debug: boolean
 ): Promise<ContextIndex> {
-  const indexPath = path.join(contextDir, "_index.yaml");
+  const indexPath = path.join(contextDir, "index.yaml");
 
   if (await fs.pathExists(indexPath)) {
     try {
@@ -144,15 +144,15 @@ async function loadIndex(
       // Fall through to scanning
     }
     if (debug) {
-      console.log("[lookup] _index.yaml corrupt, falling back to file scan");
+      console.log("[lookup] index.yaml corrupt, falling back to file scan");
     }
   } else if (debug) {
-    console.log("[lookup] _index.yaml missing, falling back to file scan");
+    console.log("[lookup] index.yaml missing, falling back to file scan");
   }
 
   // Fallback: scan all files directly
   console.warn(
-    "[lookup] warning: _index.yaml missing or corrupt, scanning files directly. Run `engraph graph` to regenerate."
+    "[lookup] warning: index.yaml missing or corrupt, scanning files directly. Run `engraph graph` to regenerate."
   );
   return scanAllFiles(contextDir);
 }

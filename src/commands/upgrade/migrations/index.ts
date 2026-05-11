@@ -46,12 +46,12 @@ export function compareVersions(a: string, b: string): number {
 }
 
 /**
- * Read the current context version from a project's _index.yaml
- * Returns null if no context folder or _index.yaml exists
+ * Read the current context version from a project's index.yaml
+ * Returns null if no context folder or index.yaml exists
  */
 export async function getCurrentVersion(projectPath: string): Promise<string | null> {
   const contextPath = path.join(projectPath, ".engraph", "context");
-  const indexPath = path.join(contextPath, "_index.yaml");
+  const indexPath = path.join(contextPath, "index.yaml");
 
   if (!(await fs.pathExists(contextPath))) {
     return null;

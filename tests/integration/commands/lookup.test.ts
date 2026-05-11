@@ -99,9 +99,9 @@ describe('lookupModules (integration)', () => {
       })
     );
 
-    // Generate _index.yaml
+    // Generate index.yaml
     await fs.writeFile(
-      path.join(projectDir, '.engraph', 'context', '_index.yaml'),
+      path.join(projectDir, '.engraph', 'context', 'index.yaml'),
       stringify({
         version: '1.0',
         generated_at: new Date().toISOString(),
@@ -173,9 +173,9 @@ describe('lookupModules (integration)', () => {
     );
   });
 
-  it('falls back to scanning when _index.yaml is missing', async () => {
+  it('falls back to scanning when index.yaml is missing', async () => {
     // Remove the index
-    await fs.remove(path.join(projectDir, '.engraph', 'context', '_index.yaml'));
+    await fs.remove(path.join(projectDir, '.engraph', 'context', 'index.yaml'));
 
     const result = await lookupModules(projectDir, ['auth/providers']);
 

@@ -174,7 +174,7 @@ Engraph's runtime is a small set of skills installed into your AI coding agent, 
 
 **Contextual commits** - embedded in git commit bodies via `/context-commit`. Structured action lines (`intent(scope)`, `decision(scope)`, `rejected(scope)`, `constraint(scope)`, `learned(scope)`) where the scope is a codegraph module ID or alias. Recalled by `engraph recall` for any module.
 
-The `.engraph/context/_index.yaml` file is a generated routing table that maps modules to applicable conventions and verification - regenerated as part of `engraph graph`. Source of truth is always the individual context files.
+The `.engraph/context/index.yaml` file is a generated routing table that maps modules to applicable conventions and verification - regenerated as part of `engraph graph`. Source of truth is always the individual context files.
 
 ### Skills
 
